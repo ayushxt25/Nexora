@@ -12,6 +12,7 @@ from app.models import (
     RecommendationResponse,
     RecommendationTrainingDataResponse,
 )
+from app.services.audit_logger import log_audit_event
 from app.services.ml_ranker_service import get_ranker_status, train_ranker
 from app.services.ranking_data_service import build_recommendation_training_data
 from app.services.recommendation_impression_service import log_recommendation_impressions
@@ -40,6 +41,15 @@ def list_recommendations(
     db: Session = Depends(get_db),
 ) -> List[RecommendationResponse]:
     recommendations = generate_recommendations(db, current_user.id)
+    log_audit_event(
+        event_type="recommendation_generation",
+        status="completed",
+        user_id=current_user.id,
+        entity_type="recommendation",
+        message="Recommendations generated",
+        metadata={"count": len(recommendations)},
+        db=db,
+    )
     return _serialize_recommendations(db, current_user.id, recommendations)
 
 
@@ -50,6 +60,15 @@ def next_best_actions(
     db: Session = Depends(get_db),
 ) -> List[RecommendationResponse]:
     recommendations = generate_recommendations(db, current_user.id)[:5]
+    log_audit_event(
+        event_type="recommendation_generation",
+        status="completed",
+        user_id=current_user.id,
+        entity_type="recommendation",
+        message="Next best actions generated",
+        metadata={"count": len(recommendations)},
+        db=db,
+    )
     return _serialize_recommendations(db, current_user.id, recommendations)
 
 

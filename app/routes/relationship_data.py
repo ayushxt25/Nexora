@@ -49,8 +49,11 @@ def _get_owned_or_404(db: Session, model: Type, object_id: int, user_id: int):
     return instance
 
 
-def _dispatch_refreshes(user_id: int) -> None:
-    dispatch_user_refreshes(user_id)
+def _dispatch_refreshes(db: Session, user_id: int) -> None:
+    try:
+        dispatch_user_refreshes(user_id, db=db)
+    except TypeError:
+        dispatch_user_refreshes(user_id)
 
 
 def _validate_optional_links(
@@ -146,7 +149,7 @@ def create_contact(
     db.add(contact)
     db.commit()
     db.refresh(contact)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _contact_response(contact)
 
 
@@ -186,7 +189,7 @@ def update_contact(
         setattr(contact, field, value)
     db.commit()
     db.refresh(contact)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _contact_response(contact)
 
 
@@ -200,7 +203,7 @@ def delete_contact(
     contact = _get_owned_or_404(db, Contact, contact_id, current_user.id)
     db.delete(contact)
     db.commit()
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return DeleteResponse()
 
 
@@ -215,7 +218,7 @@ def create_event(
     db.add(event)
     db.commit()
     db.refresh(event)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _event_response(event)
 
 
@@ -255,7 +258,7 @@ def update_event(
         setattr(event, field, value)
     db.commit()
     db.refresh(event)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _event_response(event)
 
 
@@ -269,7 +272,7 @@ def delete_event(
     event = _get_owned_or_404(db, Event, event_id, current_user.id)
     db.delete(event)
     db.commit()
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return DeleteResponse()
 
 
@@ -285,7 +288,7 @@ def create_interaction(
     db.add(interaction)
     db.commit()
     db.refresh(interaction)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _interaction_response(interaction)
 
 
@@ -331,7 +334,7 @@ def update_interaction(
         setattr(interaction, field, value)
     db.commit()
     db.refresh(interaction)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _interaction_response(interaction)
 
 
@@ -345,7 +348,7 @@ def delete_interaction(
     interaction = _get_owned_or_404(db, Interaction, interaction_id, current_user.id)
     db.delete(interaction)
     db.commit()
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return DeleteResponse()
 
 
@@ -361,7 +364,7 @@ def create_follow_up(
     db.add(follow_up)
     db.commit()
     db.refresh(follow_up)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _follow_up_response(follow_up)
 
 
@@ -402,7 +405,7 @@ def update_follow_up(
         setattr(follow_up, field, value)
     db.commit()
     db.refresh(follow_up)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _follow_up_response(follow_up)
 
 
@@ -416,7 +419,7 @@ def delete_follow_up(
     follow_up = _get_owned_or_404(db, FollowUp, follow_up_id, current_user.id)
     db.delete(follow_up)
     db.commit()
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return DeleteResponse()
 
 
@@ -453,7 +456,7 @@ def upsert_profile(
         setattr(profile, field, value)
     db.commit()
     db.refresh(profile)
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return _profile_response(profile)
 
 
@@ -468,5 +471,5 @@ def delete_profile(
         raise HTTPException(status_code=404, detail="UserProfile not found")
     db.delete(profile)
     db.commit()
-    _dispatch_refreshes(current_user.id)
+    _dispatch_refreshes(db, current_user.id)
     return DeleteResponse()

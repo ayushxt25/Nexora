@@ -26,6 +26,7 @@ from slowapi.errors import RateLimitExceeded
 from app.database import init_db
 from app.rate_limit import limiter
 from app.routes.analytics import router as analytics_router
+from app.routes.audit import router as audit_router
 from app.routes.auth import router as auth_router
 from app.routes.conversation import router as conversation_router
 from app.routes.recommendations import router as recommendations_router
@@ -77,6 +78,7 @@ app.include_router(conversation_router)
 app.include_router(relationship_data_router)
 app.include_router(recommendations_router)
 app.include_router(analytics_router)
+app.include_router(audit_router)
 
 
 @app.get("/")

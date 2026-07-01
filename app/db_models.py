@@ -48,6 +48,7 @@ class User(Base):
     recommendation_impressions = relationship(
         "RecommendationImpression", back_populates="user", cascade="all, delete-orphan"
     )
+    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
     contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")
     events = relationship("Event", back_populates="user", cascade="all, delete-orphan")
     interactions = relationship(
@@ -105,6 +106,22 @@ class RecommendationImpression(Base):
     created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
 
     user = relationship("User", back_populates="recommendation_impressions")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    event_type = Column(String(100), nullable=False, index=True)
+    entity_type = Column(String(100), nullable=True, index=True)
+    entity_id = Column(String(128), nullable=True, index=True)
+    status = Column(String(50), nullable=False, index=True)
+    message = Column(Text, nullable=True)
+    metadata_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
+
+    user = relationship("User", back_populates="audit_logs")
 
 
 class Contact(Base):

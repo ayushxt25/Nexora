@@ -11,6 +11,7 @@ from app.config import (
     get_ml_ranker_min_labeled_rows,
     get_ml_ranker_model_dir,
 )
+from app.services.audit_logger import log_audit_event
 from app.services.ranking_data_service import build_recommendation_training_data
 from app.services.ranking_feature_service import extract_ranker_features
 
@@ -81,9 +82,26 @@ def get_ranker_status(db: Session, user_id: int) -> RankerStatus:
 
 
 def train_ranker(db: Session, user_id: int) -> TrainRankerResult:
+    log_audit_event(
+        event_type="ml_ranker_training",
+        status="attempted",
+        user_id=user_id,
+        entity_type="recommendation_ranker",
+        message="Ranker training started",
+        db=db,
+    )
     rows = [row for row in build_recommendation_training_data(db, user_id) if row.label is not None]
     min_rows = get_ml_ranker_min_labeled_rows()
     if len(rows) < min_rows:
+        log_audit_event(
+            event_type="ml_ranker_training",
+            status="failed",
+            user_id=user_id,
+            entity_type="recommendation_ranker",
+            message="Insufficient labeled rows for training",
+            metadata={"labeled_rows": len(rows), "min_labeled_rows": min_rows},
+            db=db,
+        )
         return TrainRankerResult(
             status="insufficient_data",
             trained=False,
@@ -109,6 +127,15 @@ def train_ranker(db: Session, user_id: int) -> TrainRankerResult:
             negatives.append(features)
 
     if not positives or not negatives:
+        log_audit_event(
+            event_type="ml_ranker_training",
+            status="failed",
+            user_id=user_id,
+            entity_type="recommendation_ranker",
+            message="Insufficient label variety for training",
+            metadata={"labeled_rows": len(rows)},
+            db=db,
+        )
         return TrainRankerResult(
             status="insufficient_label_variety",
             trained=False,
@@ -123,6 +150,15 @@ def train_ranker(db: Session, user_id: int) -> TrainRankerResult:
     bias = -sum(weight * value for weight, value in zip(weights, midpoint))
 
     _save_model(user_id, LocalRankerModel(weights=weights, bias=bias, labeled_rows=len(rows)))
+    log_audit_event(
+        event_type="ml_ranker_training",
+        status="completed",
+        user_id=user_id,
+        entity_type="recommendation_ranker",
+        message="Ranker training completed",
+        metadata={"labeled_rows": len(rows)},
+        db=db,
+    )
     return TrainRankerResult(
         status="trained",
         trained=True,

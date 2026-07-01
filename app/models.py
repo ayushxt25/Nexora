@@ -331,3 +331,15 @@ class RankerTrainResponse(BaseModel):
     trained: bool
     labeled_rows: int
     min_labeled_rows: int
+
+
+class AuditLogResponse(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    event_type: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    status: str
+    message: Optional[str] = None
+    metadata_json: Optional[str] = None
+    created_at: datetime

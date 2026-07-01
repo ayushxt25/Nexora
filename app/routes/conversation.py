@@ -51,6 +51,7 @@ from app.models import (
     HistoryEntryResponse,
 )
 from app.rate_limit import limiter
+from app.services.audit_logger import log_audit_event
 from app.services.event_analyzer import extract_event_themes
 from app.services.fact_checker import fact_check
 from app.services.feedback_logger import load_feedback, log_feedback, summarize_feedback
@@ -113,6 +114,15 @@ def generate_conversation(
         interests=body.interests,
         themes=themes,
         suggestions=suggestions,
+    )
+    log_audit_event(
+        event_type="generation_request",
+        status="completed",
+        user_id=current_user.id,
+        entity_type="conversation",
+        message="Conversation generation completed",
+        metadata={"theme_count": len(themes), "suggestion_count": len(suggestions)},
+        db=db,
     )
 
     return ConversationResponse(themes=themes, suggestions=suggestions)

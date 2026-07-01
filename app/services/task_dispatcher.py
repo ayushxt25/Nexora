@@ -1,6 +1,9 @@
 from typing import Any
 
+from sqlalchemy.orm import Session
+
 from app.config import get_celery_enabled
+from app.services.audit_logger import log_audit_event
 from app.tasks import (
     refresh_user_analytics_task,
     refresh_user_recommendations_task,
@@ -20,23 +23,74 @@ TASK_REGISTRY = {
 }
 
 
-def dispatch_optional_task(task_name: str, *args: Any, **kwargs: Any) -> bool:
+def dispatch_optional_task(
+    task_name: str,
+    *args: Any,
+    user_id: int | None = None,
+    db: Session | None = None,
+    **kwargs: Any,
+) -> bool:
+    log_audit_event(
+        event_type="background_task_dispatch",
+        status="attempted",
+        user_id=user_id,
+        entity_type="task",
+        entity_id=task_name,
+        message="Background task dispatch attempted",
+        db=db,
+    )
     if not get_celery_enabled():
+        log_audit_event(
+            event_type="background_task_dispatch",
+            status="failed",
+            user_id=user_id,
+            entity_type="task",
+            entity_id=task_name,
+            message="Celery disabled",
+            db=db,
+        )
         return False
 
     task = TASK_REGISTRY.get(task_name)
     if task is None:
+        log_audit_event(
+            event_type="background_task_dispatch",
+            status="failed",
+            user_id=user_id,
+            entity_type="task",
+            entity_id=task_name,
+            message="Task not registered",
+            db=db,
+        )
         return False
 
     try:
         task.delay(*args, **kwargs)
+        log_audit_event(
+            event_type="background_task_dispatch",
+            status="completed",
+            user_id=user_id,
+            entity_type="task",
+            entity_id=task_name,
+            message="Background task dispatch completed",
+            db=db,
+        )
         return True
     except Exception:
+        log_audit_event(
+            event_type="background_task_dispatch",
+            status="failed",
+            user_id=user_id,
+            entity_type="task",
+            entity_id=task_name,
+            message="Background task dispatch failed",
+            db=db,
+        )
         return False
 
 
-def dispatch_user_refreshes(user_id: int) -> dict[str, bool]:
+def dispatch_user_refreshes(user_id: int, db: Session | None = None) -> dict[str, bool]:
     results: dict[str, bool] = {}
     for task_name in dict.fromkeys(REFRESH_TASK_NAMES):
-        results[task_name] = dispatch_optional_task(task_name, user_id)
+        results[task_name] = dispatch_optional_task(task_name, user_id, user_id=user_id, db=db)
     return results
