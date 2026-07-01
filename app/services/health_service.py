@@ -4,6 +4,7 @@ from sqlalchemy import text
 
 from app.config import get_celery_broker_url, get_celery_enabled, get_ml_ranker_enabled, get_ml_ranker_model_dir
 from app.database import SessionLocal
+from app.services.cache_service import get_cache_health
 from app.services.vector_store import get_vector_store
 
 
@@ -56,6 +57,7 @@ def get_dependency_health() -> dict:
         "vector_store": _vector_store_health(),
         "redis": _redis_health(),
         "ml_ranker": _ml_ranker_health(),
+        "cache": get_cache_health(),
     }
     overall = "ok"
     if any(item["status"] == "error" for item in dependencies.values()):

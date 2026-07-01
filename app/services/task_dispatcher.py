@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_celery_enabled
 from app.services.audit_logger import log_audit_event
+from app.services.cache_service import invalidate_user_cache
 from app.tasks import (
     refresh_user_analytics_task,
     refresh_user_recommendations_task,
@@ -90,6 +91,7 @@ def dispatch_optional_task(
 
 
 def dispatch_user_refreshes(user_id: int, db: Session | None = None) -> dict[str, bool]:
+    invalidate_user_cache(user_id)
     results: dict[str, bool] = {}
     for task_name in dict.fromkeys(REFRESH_TASK_NAMES):
         results[task_name] = dispatch_optional_task(task_name, user_id, user_id=user_id, db=db)

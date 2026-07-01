@@ -127,7 +127,7 @@ def test_health_endpoints_report_dependencies(client):
     ready_response = client.get("/ready")
     body = ready_response.json()
     assert "dependencies" in body
-    assert set(body["dependencies"].keys()) == {"database", "vector_store", "redis", "ml_ranker"}
+    assert set(body["dependencies"].keys()) == {"database", "vector_store", "redis", "ml_ranker", "cache"}
 
 
 def test_correlation_id_header_is_preserved(client):

@@ -48,3 +48,15 @@ def get_ml_ranker_blend_weight() -> float:
 
 def get_ml_ranker_min_labeled_rows() -> int:
     return int(os.getenv("ML_RANKER_MIN_LABELED_ROWS", "3"))
+
+
+def get_redis_url() -> str:
+    return os.getenv("REDIS_URL", get_celery_broker_url())
+
+
+def get_cache_enabled() -> bool:
+    return os.getenv("CACHE_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def get_cache_ttl_seconds() -> int:
+    return int(os.getenv("CACHE_TTL_SECONDS", "300"))

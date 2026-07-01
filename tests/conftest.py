@@ -23,6 +23,7 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.services.cache_service import reset_cache_backend  # noqa: E402
 
 
 @pytest.fixture()
@@ -68,6 +69,7 @@ def client(test_engine):
         app.state.limiter._storage.reset()
     except Exception:
         pass
+    reset_cache_backend()
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:

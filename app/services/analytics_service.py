@@ -6,6 +6,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.db_models import Contact, Event, FollowUp, Interaction
+from app.services.cache_service import cache_key_for_user, get_cached_json, set_cached_json
 
 
 def _utcnow() -> datetime:
@@ -45,7 +46,7 @@ class AnalyticsSummary:
     created_at: datetime
 
 
-def get_analytics_summary(db: Session, user_id: int) -> AnalyticsSummary:
+def _compute_analytics_summary(db: Session, user_id: int) -> AnalyticsSummary:
     now = _utcnow()
     contacts = db.query(Contact).filter(Contact.user_id == user_id).all()
     events = db.query(Event).filter(Event.user_id == user_id).all()
@@ -136,3 +137,19 @@ def get_analytics_summary(db: Session, user_id: int) -> AnalyticsSummary:
         network_health_score=network_health_score,
         created_at=now,
     )
+
+
+def get_analytics_summary(db: Session, user_id: int) -> AnalyticsSummary:
+    cache_key = cache_key_for_user(user_id, "analytics_summary")
+    cached = get_cached_json(cache_key)
+    if cached is not None:
+        return AnalyticsSummary(
+            **{
+                **cached,
+                "created_at": datetime.fromisoformat(cached["created_at"]),
+            }
+        )
+
+    summary = _compute_analytics_summary(db, user_id)
+    set_cached_json(cache_key, summary)
+    return summary
