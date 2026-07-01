@@ -45,13 +45,15 @@ from app.models import (
     EventAnalysisResponse,
     FactCheckRequest,
     FactCheckResponse,
+    FeedbackHistoryResponse,
     FeedbackRequest,
+    FeedbackSummaryResponse,
     HistoryEntryResponse,
 )
 from app.rate_limit import limiter
 from app.services.event_analyzer import extract_event_themes
 from app.services.fact_checker import fact_check
-from app.services.feedback_logger import load_feedback, log_feedback
+from app.services.feedback_logger import load_feedback, log_feedback, summarize_feedback
 from app.services.history_logger import load_history, log_conversation
 from app.services.context_service import assemble_generation_context
 from app.services.topic_generator import generate_topics
@@ -124,7 +126,16 @@ def submit_feedback(
     db: Session = Depends(get_db),
 ) -> dict:
     try:
-        log_feedback(db, user_id=current_user.id, suggestion=body.suggestion, action=body.action)
+        log_feedback(
+            db,
+            user_id=current_user.id,
+            suggestion=body.suggestion,
+            action=body.action,
+            category=body.category,
+            target_type=body.target_type,
+            target_id=body.target_id,
+            notes=body.notes,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {"status": "ok"}
@@ -150,18 +161,36 @@ def get_history(
     ]
 
 
-@router.get("/feedback-history")
+@router.get("/feedback-history", response_model=List[FeedbackHistoryResponse])
 def get_feedback_history(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list:
+) -> List[FeedbackHistoryResponse]:
     entries = load_feedback(db, user_id=current_user.id, limit=10)
     return [
-        {
-            "suggestion": e.suggestion,
-            "action": e.action,
-            "created_at": e.created_at.isoformat(),
-        }
+        FeedbackHistoryResponse(
+            suggestion=e.suggestion,
+            action=e.action,
+            category=e.category,
+            target_type=e.target_type,
+            target_id=e.target_id,
+            notes=e.notes,
+            created_at=e.created_at.isoformat(),
+        )
         for e in entries
     ]
+
+
+@router.get("/feedback/summary", response_model=FeedbackSummaryResponse)
+def get_feedback_summary(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FeedbackSummaryResponse:
+    summary = summarize_feedback(db, user_id=current_user.id)
+    return FeedbackSummaryResponse(
+        generation_quality=summary.generation_quality.__dict__,
+        recommendation_quality=summary.recommendation_quality.__dict__,
+        user_preferences=summary.user_preferences.__dict__,
+    )

@@ -76,6 +76,10 @@ class Feedback(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     suggestion = Column(Text, nullable=False)
     action = Column(String(16), nullable=False)  # 'like' or 'dislike'
+    category = Column(String(32), nullable=True, index=True)
+    target_type = Column(String(32), nullable=True, index=True)
+    target_id = Column(String(64), nullable=True, index=True)
+    notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
 
     user = relationship("User", back_populates="feedback_entries")

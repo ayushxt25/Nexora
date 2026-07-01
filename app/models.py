@@ -49,7 +49,11 @@ class ConversationResponse(BaseModel):
 class FeedbackRequest(BaseModel):
     """Input for the /feedback endpoint."""
     suggestion: str = Field(..., description="The exact suggestion text being rated")
-    action: str = Field(..., description="Either 'like' or 'dislike'")
+    action: Optional[str] = Field(default=None, description="Legacy value: either 'like' or 'dislike'")
+    category: Optional[str] = Field(default=None, description="Structured feedback category")
+    target_type: Optional[str] = Field(default=None, description="generation_suggestion, recommendation, contact, or interaction")
+    target_id: Optional[str] = Field(default=None, description="Entity identifier for the feedback target")
+    notes: Optional[str] = Field(default=None, description="Optional free-text feedback note")
 
 
 # ---------------------------------------------------------------------------
@@ -271,3 +275,30 @@ class AnalyticsSummaryResponse(BaseModel):
     top_relationship_tags: List[str]
     network_health_score: float
     created_at: datetime
+
+
+class FeedbackHistoryResponse(BaseModel):
+    suggestion: str
+    action: str
+    category: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: str
+
+
+class FeedbackBucketResponse(BaseModel):
+    total: int
+    category_counts: dict[str, int]
+
+
+class FeedbackPreferenceSignalsResponse(BaseModel):
+    preferred_feedback_categories: List[str]
+    tone_adjustment_signals: int
+    specificity_adjustment_signals: int
+
+
+class FeedbackSummaryResponse(BaseModel):
+    generation_quality: FeedbackBucketResponse
+    recommendation_quality: FeedbackBucketResponse
+    user_preferences: FeedbackPreferenceSignalsResponse

@@ -122,6 +122,108 @@ def test_feedback_appears_in_feedback_history(client, auth_headers):
     assert entries[0]["action"] == "like"
 
 
+def test_feedback_can_be_tied_to_recommendation(client, auth_headers):
+    response = client.post(
+        "/feedback",
+        json={
+            "suggestion": "Reconnect with Mina",
+            "category": "accepted",
+            "target_type": "recommendation",
+            "target_id": "rec-1",
+            "notes": "I plan to do this today",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    history = client.get("/feedback-history", headers=auth_headers).json()
+    assert history[0]["category"] == "accepted"
+    assert history[0]["target_type"] == "recommendation"
+    assert history[0]["target_id"] == "rec-1"
+
+
+def test_feedback_can_be_tied_to_generation_output(client, auth_headers):
+    response = client.post(
+        "/feedback",
+        json={
+            "suggestion": "What inspired you to build this?",
+            "category": "wrong_tone",
+            "target_type": "generation_suggestion",
+            "target_id": "gen-1",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    history = client.get("/feedback-history", headers=auth_headers).json()
+    assert history[0]["action"] == "dislike"
+    assert history[0]["category"] == "wrong_tone"
+
+
+def test_feedback_summary_endpoint(client, auth_headers):
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Ask about their team",
+            "category": "too_generic",
+            "target_type": "generation_suggestion",
+        },
+        headers=auth_headers,
+    )
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Follow up with Priya",
+            "category": "helpful",
+            "target_type": "recommendation",
+        },
+        headers=auth_headers,
+    )
+
+    response = client.get("/feedback/summary", headers=auth_headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["generation_quality"]["category_counts"]["too_generic"] == 1
+    assert body["recommendation_quality"]["category_counts"]["helpful"] == 1
+    assert body["user_preferences"]["specificity_adjustment_signals"] == 1
+
+
+def test_feedback_summary_is_user_isolated(client):
+    client.post("/auth/register", json={"username": "feedback_a", "password": "passwordA123"})
+    token_a = client.post(
+        "/auth/login", json={"username": "feedback_a", "password": "passwordA123"}
+    ).json()["access_token"]
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Private recommendation",
+            "category": "accepted",
+            "target_type": "recommendation",
+        },
+        headers=headers_a,
+    )
+
+    client.post("/auth/register", json={"username": "feedback_b", "password": "passwordB123"})
+    token_b = client.post(
+        "/auth/login", json={"username": "feedback_b", "password": "passwordB123"}
+    ).json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    response = client.get("/feedback/summary", headers=headers_b)
+    assert response.status_code == 200
+    assert response.json()["recommendation_quality"]["total"] == 0
+
+
+def test_feedback_endpoint_rejects_invalid_category(client, auth_headers):
+    response = client.post(
+        "/feedback",
+        json={"suggestion": "Ask about their work", "category": "confusing"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+
+
 def test_history_is_isolated_per_user(client):
     # User A generates a conversation.
     client.post("/auth/register", json={"username": "user_a", "password": "passwordA123"})

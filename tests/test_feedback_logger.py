@@ -5,7 +5,7 @@ Tests for app.services.feedback_logger (database-backed).
 import pytest
 
 from app.db_models import User
-from app.services.feedback_logger import load_feedback, log_feedback
+from app.services.feedback_logger import load_feedback, log_feedback, summarize_feedback
 
 
 def _create_test_user(db_session) -> User:
@@ -48,3 +48,48 @@ def test_load_feedback_respects_limit(db_session):
 
     feedback = load_feedback(db_session, user_id=user.id, limit=10)
     assert len(feedback) == 10
+
+
+def test_log_feedback_supports_structured_category_and_target(db_session):
+    user = _create_test_user(db_session)
+
+    entry = log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="Mention their latest launch",
+        category="helpful",
+        target_type="recommendation",
+        target_id="rec-1",
+        notes="Useful and specific",
+    )
+
+    assert entry.action == "like"
+    assert entry.category == "helpful"
+    assert entry.target_type == "recommendation"
+    assert entry.target_id == "rec-1"
+    assert entry.notes == "Useful and specific"
+
+
+def test_summarize_feedback_returns_generation_and_recommendation_signals(db_session):
+    user = _create_test_user(db_session)
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="Ask about their product roadmap",
+        category="too_generic",
+        target_type="generation_suggestion",
+    )
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="Reconnect with Mina",
+        category="accepted",
+        target_type="recommendation",
+    )
+
+    summary = summarize_feedback(db_session, user_id=user.id)
+    assert summary.generation_quality.total == 1
+    assert summary.generation_quality.category_counts["too_generic"] == 1
+    assert summary.recommendation_quality.total == 1
+    assert summary.recommendation_quality.category_counts["accepted"] == 1
+    assert summary.user_preferences.specificity_adjustment_signals == 1
