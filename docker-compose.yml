@@ -24,6 +24,9 @@ services:
       - DATABASE_URL=sqlite:////app/data/app.db
       - SECRET_KEY=${SECRET_KEY:-INSECURE-DEV-ONLY-CHANGE-ME}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - CELERY_ENABLED=${CELERY_ENABLED:-false}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
     volumes:
       - app-data:/app/data
     restart: unless-stopped
@@ -39,6 +42,14 @@ services:
       - "5174:80"
     depends_on:
       - backend
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: networking-assistant-redis
+    profiles: ["worker"]
+    ports:
+      - "6379:6379"
     restart: unless-stopped
 
 volumes:
