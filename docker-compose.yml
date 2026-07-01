@@ -1,4 +1,4 @@
-# Orchestrates the backend (FastAPI) and frontend (Streamlit) containers.
+# Orchestrates the backend API, frontend, PostgreSQL, Redis, and optional worker.
 #
 # Usage:
 #   docker compose up --build
@@ -8,9 +8,7 @@
 #   Backend API:    http://localhost:8000
 #   Swagger docs:   http://localhost:8000/docs
 #
-# A named volume persists the SQLite database across container restarts,
-# so user accounts/history/feedback survive `docker compose down` (but not
-# `docker compose down -v`, which removes volumes too).
+# Named volumes persist Postgres and Redis data across restarts.
 
 services:
   backend:
@@ -21,14 +19,33 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:////app/data/app.db
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://networking:networking@postgres:5432/networking_assistant}
       - SECRET_KEY=${SECRET_KEY:-INSECURE-DEV-ONLY-CHANGE-ME}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
-      - CELERY_ENABLED=${CELERY_ENABLED:-false}
+      - CELERY_ENABLED=${CELERY_ENABLED:-true}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CACHE_ENABLED=${CACHE_ENABLED:-true}
+      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-300}
+      - ML_RANKER_ENABLED=${ML_RANKER_ENABLED:-false}
+      - ML_RANKER_MODEL_DIR=${ML_RANKER_MODEL_DIR:-/app/data/models}
     volumes:
       - app-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python -m alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
     restart: unless-stopped
 
   frontend:
@@ -41,16 +58,75 @@ services:
     ports:
       - "5174:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: networking-assistant-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-networking_assistant}
+      - POSTGRES_USER=${POSTGRES_USER:-networking}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-networking}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: networking-assistant-redis
-    profiles: ["worker"]
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: networking-assistant-worker
+    profiles: ["worker"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://networking:networking@postgres:5432/networking_assistant}
+      - SECRET_KEY=${SECRET_KEY:-INSECURE-DEV-ONLY-CHANGE-ME}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - CELERY_ENABLED=${CELERY_ENABLED:-true}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CACHE_ENABLED=${CACHE_ENABLED:-true}
+      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-300}
+      - ML_RANKER_ENABLED=${ML_RANKER_ENABLED:-false}
+      - ML_RANKER_MODEL_DIR=${ML_RANKER_MODEL_DIR:-/app/data/models}
+    volumes:
+      - app-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python -m alembic upgrade head &&
+      celery -A app.tasks.celery_app worker --loglevel=info"
     restart: unless-stopped
 
 volumes:
   app-data:
+  postgres-data:
+  redis-data:

@@ -7,6 +7,8 @@
 FROM python:3.11-slim
 
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # System dependencies needed to build some Python packages (e.g. tokenizers).
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,17 +21,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now copy the rest of the application code.
+# Runtime files needed for app startup and migrations.
+COPY alembic.ini ./
+COPY alembic/ ./alembic/
 COPY app/ ./app/
 
 # data/ holds the SQLite database file; created at runtime if missing,
 # but declaring it here documents intent and lets it be mounted as a volume.
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data /app/logs
 
 EXPOSE 8000
 
 # Basic container-level health check, hitting the app's own health endpoint.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
