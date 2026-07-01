@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -43,6 +44,9 @@ class User(Base):
     )
     feedback_entries = relationship(
         "Feedback", back_populates="user", cascade="all, delete-orphan"
+    )
+    recommendation_impressions = relationship(
+        "RecommendationImpression", back_populates="user", cascade="all, delete-orphan"
     )
     contacts = relationship("Contact", back_populates="user", cascade="all, delete-orphan")
     events = relationship("Event", back_populates="user", cascade="all, delete-orphan")
@@ -83,6 +87,23 @@ class Feedback(Base):
     created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
 
     user = relationship("User", back_populates="feedback_entries")
+
+
+class RecommendationImpression(Base):
+    __tablename__ = "recommendation_impressions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    recommendation_type = Column(String(100), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    priority_score = Column(Float, nullable=False)
+    related_contact_id = Column(Integer, nullable=True, index=True)
+    related_event_id = Column(Integer, nullable=True, index=True)
+    related_follow_up_id = Column(Integer, nullable=True, index=True)
+    reason = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
+
+    user = relationship("User", back_populates="recommendation_impressions")
 
 
 class Contact(Base):

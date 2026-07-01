@@ -302,3 +302,15 @@ class FeedbackSummaryResponse(BaseModel):
     generation_quality: FeedbackBucketResponse
     recommendation_quality: FeedbackBucketResponse
     user_preferences: FeedbackPreferenceSignalsResponse
+
+
+class RecommendationTrainingDataResponse(BaseModel):
+    recommendation_type: str
+    priority_score: float
+    has_contact: bool
+    has_event: bool
+    has_follow_up: bool
+    reason: str
+    label: Optional[int] = None
+    feedback_category: Optional[str] = None
+    created_at: datetime

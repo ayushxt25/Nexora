@@ -310,3 +310,80 @@ def test_feedback_tuning_is_user_isolated(client):
         and entry["related_contact_id"] == contact_b["id"]
     )
     assert "Prior feedback" not in item["reason"]
+
+
+def test_recommendation_impressions_are_logged(client, auth_headers):
+    client.post(
+        "/contacts",
+        json={"name": "Log Me", "company": "Orbit", "role": "Founder", "relationship_strength": 5},
+        headers=auth_headers,
+    )
+
+    response = client.get("/recommendations", headers=auth_headers)
+    assert response.status_code == 200
+
+    training_data = client.get("/recommendations/training-data", headers=auth_headers)
+    assert training_data.status_code == 200
+    rows = training_data.json()
+    assert rows
+    assert any(row["recommendation_type"] == "strengthen_high_value_contact" for row in rows)
+
+
+def test_training_data_generated_from_impressions_and_feedback(client, auth_headers):
+    client.post(
+        "/contacts",
+        json={"name": "Train", "company": "North", "role": "Founder", "relationship_strength": 5},
+        headers=auth_headers,
+    )
+    client.get("/recommendations", headers=auth_headers)
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Good recommendation",
+            "category": "accepted",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=auth_headers,
+    )
+
+    response = client.get("/recommendations/training-data", headers=auth_headers)
+    assert response.status_code == 200
+    row = next(
+        entry
+        for entry in response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+    )
+    assert row["label"] == 1
+    assert row["feedback_category"] == "accepted"
+    assert row["has_contact"] is True
+
+
+def test_recommendation_training_data_empty_state(client, auth_headers):
+    response = client.get("/recommendations/training-data", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_recommendation_training_data_user_isolation(client):
+    client.post("/auth/register", json={"username": "train_a", "password": "passwordA123"})
+    token_a = client.post(
+        "/auth/login", json={"username": "train_a", "password": "passwordA123"}
+    ).json()["access_token"]
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    client.post(
+        "/contacts",
+        json={"name": "Private", "company": "Scope", "role": "Founder", "relationship_strength": 5},
+        headers=headers_a,
+    )
+    client.get("/recommendations", headers=headers_a)
+
+    client.post("/auth/register", json={"username": "train_b", "password": "passwordB123"})
+    token_b = client.post(
+        "/auth/login", json={"username": "train_b", "password": "passwordB123"}
+    ).json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    response = client.get("/recommendations/training-data", headers=headers_b)
+    assert response.status_code == 200
+    assert response.json() == []
