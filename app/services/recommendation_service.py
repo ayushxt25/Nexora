@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.db_models import Contact, Event, FollowUp, Interaction, UserProfile
+from app.db_models import Contact, Event, Feedback, FollowUp, Interaction, UserProfile
 
 
 def _utcnow() -> datetime:
@@ -31,6 +31,20 @@ class RecommendationItem:
     created_at: datetime
 
 
+FEEDBACK_SCORE_WEIGHTS = {
+    "helpful": 3.0,
+    "accepted": 4.0,
+    "dismissed": -4.0,
+    "not_helpful": -3.0,
+    "irrelevant": -3.0,
+    "too_generic": -2.0,
+    "wrong_tone": 0.0,
+    "like": 1.0,
+    "dislike": -1.0,
+}
+MAX_FEEDBACK_ADJUSTMENT = 8.0
+
+
 def _days_since(dt: Optional[datetime], now: datetime) -> Optional[int]:
     if dt is None:
         return None
@@ -45,9 +59,55 @@ def _days_until(dt: Optional[datetime], now: datetime) -> Optional[int]:
     return (dt_utc - now).days
 
 
+def _clamp_feedback_adjustment(value: float) -> float:
+    return max(-MAX_FEEDBACK_ADJUSTMENT, min(MAX_FEEDBACK_ADJUSTMENT, value))
+
+
+def _load_feedback_adjustments(db: Session, user_id: int) -> Dict[str, Tuple[float, str]]:
+    entries = (
+        db.query(Feedback)
+        .filter(Feedback.user_id == user_id, Feedback.target_type == "recommendation")
+        .all()
+    )
+    grouped: Dict[str, List[Feedback]] = {}
+    for entry in entries:
+        if not entry.target_id:
+            continue
+        grouped.setdefault(entry.target_id, []).append(entry)
+
+    adjustments: Dict[str, Tuple[float, str]] = {}
+    for target_id, target_entries in grouped.items():
+        raw_delta = 0.0
+        helpful_count = 0
+        negative_count = 0
+        for entry in target_entries:
+            signal = entry.category or entry.action
+            weight = FEEDBACK_SCORE_WEIGHTS.get(signal, 0.0)
+            raw_delta += weight
+            if signal in {"helpful", "accepted"}:
+                helpful_count += 1
+            if signal in {"dismissed", "not_helpful", "irrelevant", "too_generic"}:
+                negative_count += 1
+
+        delta = _clamp_feedback_adjustment(raw_delta)
+        if delta == 0:
+            continue
+
+        if delta > 0:
+            reason = f"Prior feedback signaled this recommendation type was helpful ({helpful_count} signal(s))."
+        else:
+            reason = (
+                f"Prior feedback reduced this recommendation type after {negative_count} negative signal(s)."
+            )
+        adjustments[target_id] = (delta, reason)
+
+    return adjustments
+
+
 def generate_recommendations(db: Session, user_id: int) -> List[RecommendationItem]:
     now = _utcnow()
     recommendations: List[RecommendationItem] = []
+    feedback_adjustments = _load_feedback_adjustments(db, user_id)
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
     goal_terms = set(_split_csv(profile.goals) + _split_csv(profile.interests)) if profile else set()
@@ -168,6 +228,14 @@ def generate_recommendations(db: Session, user_id: int) -> List[RecommendationIt
                     created_at=now,
                 )
             )
+
+    for recommendation in recommendations:
+        feedback_adjustment = feedback_adjustments.get(recommendation.recommendation_type)
+        if feedback_adjustment is None:
+            continue
+        delta, feedback_reason = feedback_adjustment
+        recommendation.priority_score += delta
+        recommendation.reason = f"{recommendation.reason} {feedback_reason}"
 
     recommendations.sort(key=lambda item: item.priority_score, reverse=True)
     return recommendations

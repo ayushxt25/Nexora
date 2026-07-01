@@ -118,3 +118,195 @@ def test_recommendations_priority_ordering(client, auth_headers):
     assert response.status_code == 200
     scores = [item["priority_score"] for item in response.json()]
     assert scores == sorted(scores, reverse=True)
+
+
+def test_helpful_feedback_boosts_similar_recommendation_type(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Mina", "company": "Orbit", "role": "Founder", "relationship_strength": 5},
+        headers=auth_headers,
+    ).json()
+
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Strengthen this relationship",
+            "category": "helpful",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=auth_headers,
+    )
+
+    response = client.get("/recommendations", headers=auth_headers)
+    item = next(
+        entry
+        for entry in response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+    assert "Prior feedback signaled" in item["reason"]
+    assert item["priority_score"] >= 88
+
+
+def test_dismissed_feedback_reduces_similar_recommendation_type(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Ravi", "company": "North", "role": "Investor", "relationship_strength": 5},
+        headers=auth_headers,
+    ).json()
+    base_response = client.get("/recommendations", headers=auth_headers)
+    base_item = next(
+        entry
+        for entry in base_response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Not useful now",
+            "category": "dismissed",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=auth_headers,
+    )
+
+    tuned_response = client.get("/recommendations", headers=auth_headers)
+    tuned_item = next(
+        entry
+        for entry in tuned_response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+    assert tuned_item["priority_score"] < base_item["priority_score"]
+
+
+def test_irrelevant_feedback_reduces_similar_recommendation_type(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Ari", "company": "East", "role": "Founder", "relationship_strength": 4},
+        headers=auth_headers,
+    ).json()
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Not relevant",
+            "category": "irrelevant",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=auth_headers,
+    )
+
+    response = client.get("/recommendations", headers=auth_headers)
+    item = next(
+        entry
+        for entry in response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+    assert "Prior feedback reduced" in item["reason"]
+
+
+def test_feedback_effect_is_bounded(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Bounded", "company": "Axis", "role": "Founder", "relationship_strength": 5},
+        headers=auth_headers,
+    ).json()
+    for _ in range(10):
+        client.post(
+            "/feedback",
+            json={
+                "suggestion": "Strong yes",
+                "category": "accepted",
+                "target_type": "recommendation",
+                "target_id": "strengthen_high_value_contact",
+            },
+            headers=auth_headers,
+        )
+
+    response = client.get("/recommendations", headers=auth_headers)
+    item = next(
+        entry
+        for entry in response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+    assert item["priority_score"] <= 93
+
+
+def test_wrong_tone_does_not_strongly_reduce_recommendation_relevance(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Tone", "company": "Wave", "role": "Founder", "relationship_strength": 5},
+        headers=auth_headers,
+    ).json()
+    base_response = client.get("/recommendations", headers=auth_headers)
+    base_item = next(
+        entry
+        for entry in base_response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Tone issue",
+            "category": "wrong_tone",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=auth_headers,
+    )
+
+    tuned_response = client.get("/recommendations", headers=auth_headers)
+    tuned_item = next(
+        entry
+        for entry in tuned_response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact["id"]
+    )
+    assert tuned_item["priority_score"] == base_item["priority_score"]
+
+
+def test_feedback_tuning_is_user_isolated(client):
+    client.post("/auth/register", json={"username": "fb_rec_a", "password": "passwordA123"})
+    token_a = client.post(
+        "/auth/login", json={"username": "fb_rec_a", "password": "passwordA123"}
+    ).json()["access_token"]
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    client.post(
+        "/feedback",
+        json={
+            "suggestion": "Private feedback",
+            "category": "dismissed",
+            "target_type": "recommendation",
+            "target_id": "strengthen_high_value_contact",
+        },
+        headers=headers_a,
+    )
+
+    client.post("/auth/register", json={"username": "fb_rec_b", "password": "passwordB123"})
+    token_b = client.post(
+        "/auth/login", json={"username": "fb_rec_b", "password": "passwordB123"}
+    ).json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+    contact_b = client.post(
+        "/contacts",
+        json={"name": "Shared", "company": "Clear", "role": "Founder", "relationship_strength": 5},
+        headers=headers_b,
+    ).json()
+
+    response = client.get("/recommendations", headers=headers_b)
+    item = next(
+        entry
+        for entry in response.json()
+        if entry["recommendation_type"] == "strengthen_high_value_contact"
+        and entry["related_contact_id"] == contact_b["id"]
+    )
+    assert "Prior feedback" not in item["reason"]
