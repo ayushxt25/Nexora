@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.db_models import User
 from app.dependencies import get_current_user
-from app.models import RecommendationResponse, RecommendationTrainingDataResponse
+from app.models import (
+    RankerStatusResponse,
+    RankerTrainResponse,
+    RecommendationResponse,
+    RecommendationTrainingDataResponse,
+)
+from app.services.ml_ranker_service import get_ranker_status, train_ranker
 from app.services.ranking_data_service import build_recommendation_training_data
 from app.services.recommendation_impression_service import log_recommendation_impressions
 from app.services.recommendation_service import generate_recommendations
@@ -57,3 +63,23 @@ def recommendation_training_data(
         RecommendationTrainingDataResponse(**row.__dict__)
         for row in build_recommendation_training_data(db, current_user.id)
     ]
+
+
+@router.post("/recommendations/train-ranker", response_model=RankerTrainResponse)
+def train_recommendation_ranker(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RankerTrainResponse:
+    result = train_ranker(db, current_user.id)
+    return RankerTrainResponse(**result.__dict__)
+
+
+@router.get("/recommendations/ranker-status", response_model=RankerStatusResponse)
+def recommendation_ranker_status(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RankerStatusResponse:
+    status = get_ranker_status(db, current_user.id)
+    return RankerStatusResponse(**status.__dict__)

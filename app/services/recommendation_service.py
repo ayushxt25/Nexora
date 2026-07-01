@@ -6,6 +6,7 @@ from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy.orm import Session
 
 from app.db_models import Contact, Event, Feedback, FollowUp, Interaction, UserProfile
+from app.services.ml_ranker_service import score_recommendation_with_ranker
 
 
 def _utcnow() -> datetime:
@@ -293,6 +294,20 @@ def generate_recommendations(db: Session, user_id: int) -> List[RecommendationIt
             continue
         recommendation.priority_score += delta
         recommendation.reason = f"{recommendation.reason} {feedback_reason}"
+
+    for recommendation in recommendations:
+        blended_score, ml_reason = score_recommendation_with_ranker(
+            user_id=user_id,
+            recommendation_type=recommendation.recommendation_type,
+            base_priority_score=recommendation.priority_score,
+            has_contact=recommendation.related_contact_id is not None,
+            has_event=recommendation.related_event_id is not None,
+            has_follow_up=recommendation.related_follow_up_id is not None,
+            created_at=recommendation.created_at,
+        )
+        recommendation.priority_score = blended_score
+        if ml_reason:
+            recommendation.reason = f"{recommendation.reason} {ml_reason}"
 
     recommendations.sort(key=lambda item: item.priority_score, reverse=True)
     return recommendations

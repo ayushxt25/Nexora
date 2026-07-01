@@ -7,6 +7,7 @@ load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SQLITE_PATH = PROJECT_ROOT / "data" / "app.db"
+DEFAULT_RANKER_MODEL_DIR = PROJECT_ROOT / "data" / "models"
 
 
 def get_database_url() -> str:
@@ -31,3 +32,19 @@ def get_celery_broker_url() -> str:
 
 def get_celery_result_backend() -> str:
     return os.getenv("CELERY_RESULT_BACKEND", get_celery_broker_url())
+
+
+def get_ml_ranker_enabled() -> bool:
+    return os.getenv("ML_RANKER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def get_ml_ranker_model_dir() -> Path:
+    return Path(os.getenv("ML_RANKER_MODEL_DIR", str(DEFAULT_RANKER_MODEL_DIR)))
+
+
+def get_ml_ranker_blend_weight() -> float:
+    return float(os.getenv("ML_RANKER_BLEND_WEIGHT", "0.35"))
+
+
+def get_ml_ranker_min_labeled_rows() -> int:
+    return int(os.getenv("ML_RANKER_MIN_LABELED_ROWS", "3"))

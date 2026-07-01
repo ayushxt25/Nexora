@@ -316,3 +316,18 @@ class RecommendationTrainingDataResponse(BaseModel):
     label: Optional[int] = None
     feedback_category: Optional[str] = None
     created_at: datetime
+
+
+class RankerStatusResponse(BaseModel):
+    enabled: bool
+    model_available: bool
+    trained: bool
+    labeled_rows: int
+    min_labeled_rows: int
+
+
+class RankerTrainResponse(BaseModel):
+    status: str
+    trained: bool
+    labeled_rows: int
+    min_labeled_rows: int
