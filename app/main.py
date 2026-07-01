@@ -27,6 +27,7 @@ from app.database import init_db
 from app.rate_limit import limiter
 from app.routes.auth import router as auth_router
 from app.routes.conversation import router as conversation_router
+from app.routes.recommendations import router as recommendations_router
 from app.routes.relationship_data import router as relationship_data_router
 
 logging.basicConfig(
@@ -73,6 +74,7 @@ def on_startup() -> None:
 app.include_router(auth_router)
 app.include_router(conversation_router)
 app.include_router(relationship_data_router)
+app.include_router(recommendations_router)
 
 
 @app.get("/")

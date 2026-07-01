@@ -242,3 +242,16 @@ class UserProfileResponse(UserProfileBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
+
+
+class RecommendationResponse(BaseModel):
+    id: str
+    recommendation_type: str
+    title: str
+    description: str
+    priority_score: float
+    reason: str
+    related_contact_id: Optional[int] = None
+    related_event_id: Optional[int] = None
+    related_follow_up_id: Optional[int] = None
+    created_at: datetime
