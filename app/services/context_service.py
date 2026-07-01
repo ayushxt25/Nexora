@@ -29,6 +29,38 @@ def _match_score(text: str, keywords: set[str]) -> int:
     return sum(1 for keyword in keywords if keyword in lower_text)
 
 
+def _build_semantic_query(
+    description: str,
+    interests: Sequence[str],
+    themes: Sequence[str],
+) -> str:
+    return " ".join(part for part in [description, *interests, *themes] if part).strip()
+
+
+def _load_semantic_memory_summary(
+    db: Session,
+    user_id: int,
+    description: str,
+    interests: Sequence[str],
+    themes: Sequence[str],
+) -> List[str]:
+    query_text = _build_semantic_query(description, interests, themes)
+    if not query_text:
+        return []
+
+    try:
+        semantic_matches = semantic_search_memories(
+            db=db,
+            query_text=query_text,
+            user_id=user_id,
+            top_k=3,
+        )
+    except Exception:
+        return []
+
+    return [match.text for match in semantic_matches]
+
+
 @dataclass
 class GenerationContext:
     profile_summary: Optional[str]
@@ -212,13 +244,13 @@ def assemble_generation_context(
             )
     follow_ups_summary = follow_ups_summary[:3]
 
-    semantic_matches = semantic_search_memories(
+    semantic_memory_summary = _load_semantic_memory_summary(
         db=db,
-        query_text=" ".join([description, *interests, *themes]),
         user_id=user_id,
-        top_k=3,
+        description=description,
+        interests=interests,
+        themes=themes,
     )
-    semantic_memory_summary = [match.text for match in semantic_matches]
 
     return GenerationContext(
         profile_summary=profile_summary,
