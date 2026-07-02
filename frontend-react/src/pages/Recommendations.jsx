@@ -331,6 +331,15 @@ export default function Recommendations() {
         prefill: {
           description: `${item.title}. ${item.description} ${item.reason}`.trim(),
           interests: item.contactName || "",
+          sourceType: "recommendation",
+          sourceTitle: item.title,
+          contactName: item.contactName,
+          recommendation: {
+            id: item.recommendation_id,
+            title: item.title,
+            type: item.recommendation_type,
+            reason: item.reason,
+          },
         },
       },
     });

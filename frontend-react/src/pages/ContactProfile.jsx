@@ -224,6 +224,17 @@ export default function ContactProfile() {
                       prefill: {
                         description: `${contact.name}${contact.company ? ` from ${contact.company}` : ""}${contact.notes ? ` - ${contact.notes}` : ""}`,
                         interests: Array.isArray(contact.tags) ? contact.tags.join(", ") : "",
+                        sourceType: "contact",
+                        sourceTitle: contact.name,
+                        contact: {
+                          id: contact.id,
+                          name: contact.name,
+                          company: contact.company,
+                          role: contact.role,
+                          notes: contact.notes,
+                          tags: contact.tags,
+                          relationshipStrength: contact.relationship_strength,
+                        },
                       },
                     },
                   })
@@ -466,6 +477,17 @@ export default function ContactProfile() {
                 prefill: {
                   description: `${contact.name}${contact.company ? ` from ${contact.company}` : ""}${contact.notes ? ` - ${contact.notes}` : ""}`,
                   interests: Array.isArray(contact.tags) ? contact.tags.join(", ") : "",
+                  sourceType: "contact",
+                  sourceTitle: contact.name,
+                  contact: {
+                    id: contact.id,
+                    name: contact.name,
+                    company: contact.company,
+                    role: contact.role,
+                    notes: contact.notes,
+                    tags: contact.tags,
+                    relationshipStrength: contact.relationship_strength,
+                  },
                 },
               },
             })

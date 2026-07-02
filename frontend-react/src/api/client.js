@@ -98,6 +98,10 @@ export const api = {
 
   getFeedbackHistory: () => request("/feedback-history", { method: "GET" }),
 
+  feedback: {
+    summary: () => request("/feedback/summary", { method: "GET" }),
+  },
+
   analyzeEvent: (description, candidateLabels) =>
     request("/analyze-event", {
       method: "POST",

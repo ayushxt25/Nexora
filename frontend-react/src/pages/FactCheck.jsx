@@ -1,22 +1,29 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Copy, Search } from "lucide-react";
 import { api } from "../api/client";
 import Button from "../components/Button";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
-import { SkeletonCard } from "../components/ui/SkeletonLoader";
+import { SkeletonCard, SkeletonLine } from "../components/ui/SkeletonLoader";
+
+const exampleTopics = [
+  "AI infrastructure market",
+  "developer productivity metrics",
+  "blockchain in healthcare",
+];
 
 export default function FactCheck() {
   const [query, setQuery] = useState("");
-  const [summary, setSummary] = useState("");
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  async function handleCheck(e) {
-    e.preventDefault();
+  async function handleCheck(event) {
+    event.preventDefault();
     setError("");
-    setSummary("");
+    setResult(null);
     if (!query.trim()) {
       setError("Please enter a topic to verify.");
       return;
@@ -25,7 +32,7 @@ export default function FactCheck() {
     setLoading(true);
     try {
       const data = await api.factCheck(query);
-      setSummary(data.summary);
+      setResult(data);
     } catch (err) {
       if (err.status === 429) {
         setError("Too many fact-checks in a row. Please wait a moment and try again.");
@@ -37,79 +44,155 @@ export default function FactCheck() {
     }
   }
 
+  async function handleCopy() {
+    if (!result?.summary) return;
+    try {
+      await navigator.clipboard.writeText(result.summary);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
     >
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Search className="w-5 h-5 text-accent-secondary" />
-          <h1 className="text-xl font-semibold text-white">Quick Fact Check</h1>
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-accent-secondary" />
+            <h1 className="text-2xl font-semibold text-white">Fact Check</h1>
+          </div>
+          <p className="mt-2 text-sm text-white/50 max-w-3xl">
+            Verify a topic before you reference it in relationship prep. The backend currently returns a concise
+            summary, not citations or confidence scoring.
+          </p>
         </div>
-        <p className="text-sm text-white/50">Verify a topic against Wikipedia before bringing it up.</p>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <section className="glass rounded-2xl p-5 lg:p-6">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-white">Verification request</h2>
+            <p className="mt-1 text-sm text-white/45">
+              Use this when you want a quick sanity check before bringing up a company, trend, or topic in a meeting.
+            </p>
+          </div>
+
+          <form onSubmit={handleCheck} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Topic to verify</label>
+              <textarea
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                rows={4}
+                placeholder="Example: recent trends in developer productivity platforms"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-secondary/50 resize-none"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {exampleTopics.map((topic) => (
+                <button
+                  key={topic}
+                  type="button"
+                  onClick={() => setQuery(topic)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+
+            {error ? <ErrorState message={error} /> : null}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" icon={Search} loading={loading}>
+                Run fact check
+              </Button>
+              {result ? (
+                <Button type="button" variant="secondary" icon={Copy} onClick={handleCopy}>
+                  {copied ? "Copied" : "Copy summary"}
+                </Button>
+              ) : null}
+            </div>
+          </form>
+        </section>
+
+        <section className="glass rounded-2xl p-5 lg:p-6 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-white">Evidence and confidence</h2>
+            <p className="mt-1 text-sm text-white/45">
+              This workspace only shows verification details the backend actually returns.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-wide text-white/35">Confidence signal</p>
+            <p className="mt-2 text-sm text-white/60">
+              No explicit confidence score is currently provided by the backend.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-wide text-white/35">Source detail</p>
+            <p className="mt-2 text-sm text-white/60">
+              The response is a summary-only verification result. Source URLs and citation breakdowns are not exposed
+              to the frontend today.
+            </p>
+          </div>
+        </section>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="glass rounded-xl p-5 mb-6"
-      >
-        <form onSubmit={handleCheck} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1.5">Topic to verify</label>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. blockchain in healthcare"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent-secondary/50"
-            />
+      {loading ? (
+        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="glass rounded-2xl p-5 lg:p-6 space-y-3">
+            <SkeletonLine width="40%" />
+            <SkeletonLine width="75%" />
+            <SkeletonLine width="60%" />
           </div>
-
-          {error && <ErrorState message={error} />}
-
-          <Button type="submit" loading={loading} icon={Search}>
-            Check Fact
-          </Button>
-        </form>
-      </motion.div>
-
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
           <SkeletonCard />
-        </motion.div>
-      )}
+        </section>
+      ) : null}
 
-      {!loading && summary && (
-        <motion.div
+      {!loading && result ? (
+        <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="glass rounded-xl p-5"
+          transition={{ duration: 0.25 }}
+          className="glass rounded-2xl p-5 lg:p-6"
         >
-          <div className="flex items-center gap-2 mb-3 text-emerald-400">
-            <CheckCircle2 className="w-4 h-4" />
-            <h3 className="text-sm font-medium">Summary</h3>
+          <div className="flex items-center gap-2 text-emerald-400">
+            <CheckCircle2 className="h-4 w-4" />
+            <h2 className="text-base font-semibold">Verification summary</h2>
           </div>
-          <p className="text-sm text-white/80 leading-relaxed">{summary}</p>
-        </motion.div>
-      )}
 
-      {!loading && !summary && !error && (
+          <div className="mt-4 grid gap-4 xl:grid-cols-[0.7fr_1.3fr]">
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+              <p className="text-xs uppercase tracking-wide text-white/35">Query</p>
+              <p className="mt-2 text-sm text-white/75">{result.query}</p>
+            </div>
+
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+              <p className="text-xs uppercase tracking-wide text-white/35">Evidence summary</p>
+              <p className="mt-2 text-sm leading-7 text-white/80">{result.summary}</p>
+            </div>
+          </div>
+        </motion.section>
+      ) : null}
+
+      {!loading && !result && !error ? (
         <EmptyState
           icon={Search}
           title="No fact-check yet"
-          description="Enter a topic to verify against Wikipedia."
+          description="Enter a topic to verify before using it in conversation prep."
         />
-      )}
+      ) : null}
     </motion.div>
   );
 }

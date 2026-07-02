@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
-import { Sparkles, Tag, AlertCircle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  CalendarClock,
+  Check,
+  Copy,
+  History,
+  RefreshCw,
+  Sparkles,
+  Tag,
+  Users2,
+} from "lucide-react";
 import { api } from "../api/client";
 import Button from "../components/Button";
 import EmptyState from "../components/ui/EmptyState";
@@ -9,13 +18,108 @@ import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard, SkeletonLine } from "../components/ui/SkeletonLoader";
 
 const examplePrompts = [
-  { description: "AI for Sustainable Cities conference", interests: "climate change, urban planning" },
-  { description: "Fintech and blockchain meetup", interests: "payments, decentralization" },
-  { description: "Healthcare innovation summit", interests: "telemedicine, biotech" },
+  {
+    label: "Climate event",
+    description: "AI for Sustainable Cities conference with climate tech founders and urban policy leaders",
+    interests: "climate change, urban planning, public-private partnerships",
+  },
+  {
+    label: "Recruiter outreach",
+    description: "Small recruiting meetup for engineering leaders and platform teams",
+    interests: "hiring, developer experience, technical leadership",
+  },
+  {
+    label: "Investor dinner",
+    description: "Private dinner with fintech operators, angel investors, and payments founders",
+    interests: "payments, product strategy, venture building",
+  },
 ];
+
+const feedbackActions = [
+  { key: "helpful", label: "Helpful", action: "like" },
+  { key: "too_generic", label: "Too generic", action: "dislike" },
+  { key: "wrong_tone", label: "Wrong tone", action: "dislike" },
+];
+
+function parseInterests(value) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildContextCards(prefill, parsedInterests) {
+  const cards = [];
+
+  if (prefill?.contact) {
+    cards.push({
+      key: "contact",
+      title: "Contact context",
+      lines: [
+        prefill.contact.name,
+        [prefill.contact.company, prefill.contact.role].filter(Boolean).join(" - "),
+        prefill.contact.notes || "",
+      ].filter(Boolean),
+      chips: Array.isArray(prefill.contact.tags) ? prefill.contact.tags : [],
+    });
+  }
+
+  if (prefill?.event) {
+    cards.push({
+      key: "event",
+      title: "Event context",
+      lines: [
+        prefill.event.title,
+        prefill.event.location || "",
+        prefill.event.date ? new Date(prefill.event.date).toLocaleString() : "",
+      ].filter(Boolean),
+      chips: Array.isArray(prefill.event.goals) ? prefill.event.goals : [],
+    });
+  }
+
+  if (prefill?.recommendation) {
+    cards.push({
+      key: "recommendation",
+      title: "Recommendation context",
+      lines: [
+        prefill.recommendation.title,
+        prefill.recommendation.type ? prefill.recommendation.type.replaceAll("_", " ") : "",
+        prefill.recommendation.reason || "",
+      ].filter(Boolean),
+      chips: prefill.contactName ? [prefill.contactName] : [],
+    });
+  }
+
+  if (prefill?.opportunity) {
+    cards.push({
+      key: "opportunity",
+      title: "Opportunity context",
+      lines: [
+        prefill.opportunity.title,
+        prefill.opportunity.type ? prefill.opportunity.type.replaceAll("_", " ") : "",
+        prefill.opportunity.recommendedAction || "",
+      ].filter(Boolean),
+      chips: prefill.contactName ? [prefill.contactName] : [],
+    });
+  }
+
+  if (!cards.length && parsedInterests.length) {
+    cards.push({
+      key: "interests",
+      title: "Interest context",
+      lines: ["The generator will use these interests as direct prompt context."],
+      chips: parsedInterests,
+    });
+  }
+
+  return cards;
+}
 
 export default function Generate() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const prefill = location.state?.prefill || null;
+
   const [description, setDescription] = useState("");
   const [interests, setInterests] = useState("");
   const [themes, setThemes] = useState([]);
@@ -23,53 +127,75 @@ export default function Generate() {
   const [feedbackGiven, setFeedbackGiven] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState("");
+  const [submittedOnce, setSubmittedOnce] = useState(false);
 
   useEffect(() => {
-    const prefill = location.state?.prefill;
     if (!prefill) return;
     if (prefill.description) setDescription(prefill.description);
     if (prefill.interests) setInterests(prefill.interests);
-  }, [location.state]);
+  }, [prefill]);
 
-  async function handleGenerate(e) {
-    e?.preventDefault();
+  const parsedInterests = useMemo(() => parseInterests(interests), [interests]);
+  const contextCards = useMemo(() => buildContextCards(prefill, parsedInterests), [prefill, parsedInterests]);
+  const sourceLabel = prefill?.sourceTitle || prefill?.contact?.name || prefill?.event?.title || "";
+
+  async function runGeneration() {
     setError("");
-    if (!description.trim() || !interests.trim()) {
-      setError("Please fill in both the event description and your interests.");
+    if (!description.trim() || parsedInterests.length === 0) {
+      setError("Please add an event or relationship scenario and at least one interest.");
       return;
     }
-    const interestsList = interests
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
 
     setLoading(true);
     setSuggestions([]);
     setThemes([]);
     setFeedbackGiven({});
     try {
-      const data = await api.generateConversation(description, interestsList);
+      const data = await api.generateConversation(description, parsedInterests);
       setThemes(data.themes || []);
       setSuggestions(data.suggestions || []);
+      setSubmittedOnce(true);
     } catch (err) {
       if (err.status === 429) {
         setError("You're generating too quickly. Please wait a moment and try again.");
       } else if (err.status === 401) {
-        setError("Your session has expired. Please log out and log back in.");
+        setError("Your session has expired. Please log in again.");
       } else {
-        setError(err.message || "Something went wrong.");
+        setError(err.message || "Something went wrong while generating.");
       }
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleFeedback(suggestion, action) {
+  async function handleGenerate(event) {
+    event?.preventDefault();
+    await runGeneration();
+  }
+
+  async function handleFeedback(suggestion, category, action) {
     try {
-      await api.sendFeedback(suggestion, action);
-      setFeedbackGiven((prev) => ({ ...prev, [suggestion]: action }));
+      await api.submitFeedback({
+        suggestion,
+        action,
+        category,
+        target_type: "generation_suggestion",
+        notes: sourceLabel ? `Source context: ${sourceLabel}` : undefined,
+      });
+      setFeedbackGiven((prev) => ({ ...prev, [suggestion]: category }));
     } catch {
-      // Non-critical -- fail silently in UI, feedback just won't be recorded.
+      // Keep generation flow fail-open if feedback logging is unavailable.
+    }
+  }
+
+  async function handleCopy(value, key) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey(""), 1200);
+    } catch {
+      setCopiedKey("");
     }
   }
 
@@ -83,158 +209,304 @@ export default function Generate() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
     >
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-5 h-5 text-accent" />
-          <h1 className="text-xl font-semibold text-white">Generate Conversation Starters</h1>
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-accent" />
+            <h1 className="text-2xl font-semibold text-white">Relationship Prep Workspace</h1>
+          </div>
+          <p className="mt-2 text-sm text-white/50 max-w-3xl">
+            Build conversation starters from real event, contact, recommendation, and opportunity context. Successful
+            generations are saved automatically to your history.
+          </p>
         </div>
-        <p className="text-sm text-white/50">
-          Tell us about the event and your interests — we'll craft personalized icebreakers.
-        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={History} onClick={() => navigate("/history")}>
+            Open history
+          </Button>
+          <Button icon={Sparkles} onClick={runGeneration} loading={loading}>
+            {suggestions.length ? "Regenerate" : "Generate starters"}
+          </Button>
+        </div>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="glass rounded-2xl p-5 lg:p-6">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-white">Preparation input</h2>
+            <p className="mt-1 text-sm text-white/45">
+              Describe the relationship moment you are preparing for and the interests you want the generator to
+              emphasize.
+            </p>
+          </div>
+
+          <form onSubmit={handleGenerate} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Scenario or event description</label>
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={5}
+                placeholder="Example: Coffee chat with a recruiter before an AI infrastructure meetup"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Interests and angles</label>
+              <input
+                type="text"
+                value={interests}
+                onChange={(event) => setInterests(event.target.value)}
+                placeholder="Example: hiring, platform engineering, developer productivity"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {examplePrompts.map((example) => (
+                <button
+                  type="button"
+                  key={example.label}
+                  onClick={() => useExample(example)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
+
+            {error ? <ErrorState message={error} /> : null}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" icon={Sparkles} loading={loading}>
+                Generate conversation starters
+              </Button>
+              {submittedOnce ? (
+                <Button type="button" variant="secondary" icon={RefreshCw} onClick={runGeneration} loading={loading}>
+                  Regenerate
+                </Button>
+              ) : null}
+            </div>
+          </form>
+        </section>
+
+        <section className="glass rounded-2xl p-5 lg:p-6 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-white">Context preview</h2>
+            <p className="mt-1 text-sm text-white/45">
+              This is the real context visible to the frontend before the backend adds stored relationship data and
+              semantic memory.
+            </p>
+          </div>
+
+          {sourceLabel ? (
+            <div className="rounded-xl border border-accent/20 bg-accent/10 px-4 py-3 text-sm text-accent">
+              Loaded from {sourceLabel}
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-wide text-white/35">Interest tags</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {parsedInterests.length ? (
+                parsedInterests.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/65"
+                  >
+                    <Tag className="h-3 w-3 text-accent" />
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-white/40">Add interests to preview the prompt inputs.</span>
+              )}
+            </div>
+          </div>
+
+          {contextCards.length ? (
+            <div className="space-y-3">
+              {contextCards.map((card) => (
+                <div key={card.key} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                  <p className="text-xs uppercase tracking-wide text-white/35">{card.title}</p>
+                  <div className="mt-2 space-y-1">
+                    {card.lines.map((line) => (
+                      <p key={line} className="text-sm text-white/70">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                  {card.chips.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {card.chips.map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Users2}
+              title="No linked prep context yet"
+              description="Open this page from a contact, event, recommendation, or opportunity to carry richer relationship context into generation."
+            />
+          )}
+        </section>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="glass rounded-xl p-5 mb-6"
-      >
-        <form onSubmit={handleGenerate} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1.5">Event description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="e.g. AI for Sustainable Cities conference"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50 resize-none"
-            />
+      {loading ? (
+        <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="glass rounded-2xl p-5 lg:p-6 space-y-4">
+            <SkeletonLine width="35%" />
+            <SkeletonLine width="80%" />
+            <SkeletonLine width="65%" />
+            <SkeletonLine width="50%" />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1.5">Your interests (comma-separated)</label>
-            <input
-              type="text"
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              placeholder="e.g. climate change, urban planning"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-accent/50"
-            />
+          <div className="space-y-3">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
+        </section>
+      ) : null}
 
-          <div className="flex flex-wrap gap-2">
-            {examplePrompts.map((ex) => (
-              <button
-                type="button"
-                key={ex.description}
-                onClick={() => useExample(ex)}
-                className="text-xs px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors border border-white/10"
-              >
-                {ex.description}
-              </button>
-            ))}
-          </div>
-
-          {error && <ErrorState message={error} />}
-
-          <Button type="submit" loading={loading} icon={Sparkles}>
-            Generate Starters
-          </Button>
-        </form>
-      </motion.div>
-
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-3"
-        >
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </motion.div>
-      )}
-
-      {!loading && themes.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="glass rounded-xl p-5 mb-6"
-        >
-          <h3 className="text-sm font-medium text-white/70 flex items-center gap-2 mb-3">
-            <Tag className="w-4 h-4 text-accent" />
-            Detected Themes
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {themes.map((t) => (
-              <span
-                key={t}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-accent/15 text-accent border border-accent/20"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {!loading && suggestions.length === 0 && themes.length === 0 && !error && (
+      {!loading && !suggestions.length && !themes.length && !error ? (
         <EmptyState
           icon={Sparkles}
-          title="No suggestions yet"
-          description="Generate conversation starters to see suggestions appear here."
+          title="No prep output yet"
+          description="Generate conversation starters to see detected themes, reusable openers, and feedback actions."
         />
-      )}
+      ) : null}
 
-      {!loading && suggestions.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <h3 className="text-sm font-medium text-white/70 mb-3">Suggested Conversation Starters</h3>
-          <div className="flex flex-col gap-3">
-            {suggestions.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: i * 0.04 }}
-                className="glass rounded-lg p-4 flex items-start justify-between gap-4"
+      {!loading && (themes.length > 0 || suggestions.length > 0) ? (
+        <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+          <section className="glass rounded-2xl p-5 lg:p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-accent" />
+              <h2 className="text-base font-semibold text-white">Generation summary</h2>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/35">Themes</p>
+                <p className="mt-2 text-xl font-semibold text-white">{themes.length}</p>
+              </div>
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/35">Starters</p>
+                <p className="mt-2 text-xl font-semibold text-white">{suggestions.length}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                <p className="text-xs uppercase tracking-wide text-emerald-200/70">History</p>
+                <p className="mt-2 text-sm font-medium text-emerald-200">Saved automatically</p>
+              </div>
+            </div>
+
+            {themes.length ? (
+              <div>
+                <p className="text-sm font-medium text-white/70">Detected themes</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {themes.map((theme) => (
+                    <span
+                      key={theme}
+                      className="rounded-full border border-accent/20 bg-accent/12 px-3 py-1 text-xs font-medium text-accent"
+                    >
+                      {theme}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+              <p className="text-sm text-white/60">
+                Use feedback actions below to improve future recommendation and preparation ranking. The backend does
+                not currently expose a separate "save draft" endpoint because successful generations already persist to
+                history.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button variant="secondary" icon={History} onClick={() => navigate("/history")}>
+                  View history
+                </Button>
+                <Button
+                  variant="secondary"
+                  icon={Copy}
+                  onClick={() => handleCopy(suggestions.join("\n"), "all")}
+                  disabled={!suggestions.length}
+                >
+                  {copiedKey === "all" ? "Copied all" : "Copy all"}
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-white">Generated conversation sections</h2>
+              <button
+                onClick={runGeneration}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/65 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <p className="text-sm text-white/80 leading-relaxed flex-1">
-                  <span className="text-accent font-semibold mr-2">{i + 1}.</span>
-                  {s}
-                </p>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <RefreshCw className="h-4 w-4" />
+                Regenerate
+              </button>
+            </div>
+
+            {suggestions.map((suggestion, index) => (
+              <motion.div
+                key={`${suggestion}-${index}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, delay: index * 0.04 }}
+                className="glass rounded-2xl p-5 space-y-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-white/35">Starter {index + 1}</p>
+                    <p className="mt-2 text-sm leading-7 text-white/80">{suggestion}</p>
+                  </div>
                   <button
-                    onClick={() => handleFeedback(s, "like")}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      feedbackGiven[s] === "like"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "text-white/30 hover:text-emerald-400 hover:bg-emerald-500/10"
-                    }`}
-                    title="Helpful"
+                    onClick={() => handleCopy(suggestion, `suggestion-${index}`)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/65 transition-colors hover:bg-white/10 hover:text-white"
                   >
-                    <span className="text-lg">👍</span>
+                    {copiedKey === `suggestion-${index}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === `suggestion-${index}` ? "Copied" : "Copy"}
                   </button>
-                  <button
-                    onClick={() => handleFeedback(s, "dislike")}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      feedbackGiven[s] === "dislike"
-                        ? "bg-red-500/20 text-red-400"
-                        : "text-white/30 hover:text-red-400 hover:bg-red-500/10"
-                    }`}
-                    title="Not helpful"
-                  >
-                    <span className="text-lg">👎</span>
-                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {feedbackActions.map((item) => {
+                    const active = feedbackGiven[suggestion] === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleFeedback(suggestion, item.key, item.action)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                          active
+                            ? "border-accent/30 bg-accent/15 text-accent"
+                            : "border-white/10 bg-white/5 text-white/55 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </motion.div>
             ))}
-          </div>
-        </motion.div>
-      )}
+          </section>
+        </div>
+      ) : null}
     </motion.div>
   );
 }

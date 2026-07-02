@@ -296,6 +296,15 @@ export default function Events() {
                     prefill: {
                       description: selectedEvent.description || selectedEvent.title,
                       interests: selectedEvent.goals?.join(", ") || "",
+                      sourceType: "event",
+                      sourceTitle: selectedEvent.title,
+                      event: {
+                        id: selectedEvent.id,
+                        title: selectedEvent.title,
+                        location: selectedEvent.location,
+                        date: selectedEvent.event_date,
+                        goals: selectedEvent.goals,
+                      },
                     },
                   },
                 });

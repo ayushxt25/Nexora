@@ -305,6 +305,15 @@ export default function Opportunities() {
         prefill: {
           description: `${item.title}. ${item.description} ${item.recommended_action}`.trim(),
           interests: item.contactName || "",
+          sourceType: "opportunity",
+          sourceTitle: item.title,
+          contactName: item.contactName,
+          opportunity: {
+            id: item.opportunity_id,
+            title: item.title,
+            type: item.opportunity_type,
+            recommendedAction: item.recommended_action,
+          },
         },
       },
     });
