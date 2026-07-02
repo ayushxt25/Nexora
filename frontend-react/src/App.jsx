@@ -15,6 +15,7 @@ import ContactProfile from "./pages/ContactProfile";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import Onboarding from "./pages/Onboarding";
 
 const Generate = lazy(() => import("./pages/Generate"));
 const FactCheck = lazy(() => import("./pages/FactCheck"));
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/generate" element={withSuspense(<Generate />)} />
         <Route path="/fact-check" element={withSuspense(<FactCheck />)} />
         <Route path="/history" element={<History />} />

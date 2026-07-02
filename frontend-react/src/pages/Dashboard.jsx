@@ -19,6 +19,7 @@ import ErrorState from "../components/ui/ErrorState";
 import ScoreBadge from "../components/ui/ScoreBadge";
 import StatCard from "../components/ui/StatCard";
 import { SkeletonCard, SkeletonLine } from "../components/ui/SkeletonLoader";
+import { useOnboardingStatus } from "../hooks/useOnboardingStatus";
 
 const CLOSED_FOLLOW_UP_STATUSES = new Set(["done", "completed", "complete", "closed"]);
 
@@ -261,6 +262,7 @@ function DashboardStats({ analytics, loading, error, onRetry, onViewContacts, on
 function Dashboard() {
   const navigate = useNavigate();
   const { username } = useAuth();
+  const onboarding = useOnboardingStatus(username);
 
   const analyticsSection = useDashboardSection(
     useCallback(() => api.analytics.summary(), [])
@@ -322,6 +324,45 @@ function Dashboard() {
           </p>
         </div>
       </section>
+
+      {!onboarding.loading && onboarding.needsOnboarding ? (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24 }}
+          className="glass rounded-2xl p-5 lg:p-6"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold text-white">Complete your first-time setup</p>
+              <p className="mt-1 text-sm text-white/55">
+                Your dashboard is using real backend data. Add the missing profile, contact, and first event or
+                follow-up records to unlock a fuller experience.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/45">
+                <span className={`rounded-full px-3 py-1 ${onboarding.profileComplete ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5"}`}>
+                  {onboarding.profileComplete ? "Profile ready" : "Profile needed"}
+                </span>
+                <span className={`rounded-full px-3 py-1 ${onboarding.hasContacts ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5"}`}>
+                  {onboarding.hasContacts ? "Contact added" : "First contact needed"}
+                </span>
+                <span className={`rounded-full px-3 py-1 ${onboarding.hasActivity ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5"}`}>
+                  {onboarding.hasActivity ? "Workflow active" : "Event or follow-up needed"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => navigate("/onboarding")}
+                className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent/90"
+              >
+                {onboarding.preference.status === "skipped" ? "Resume onboarding" : "Open onboarding"}
+              </button>
+            </div>
+          </div>
+        </motion.section>
+      ) : null}
 
       <DashboardStats
         analytics={analyticsSection.data}

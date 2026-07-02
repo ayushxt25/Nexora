@@ -29,7 +29,7 @@ export default function Login() {
     try {
       const data = await api.login(username, password);
       login(data.access_token, username);
-      navigate("/dashboard");
+      navigate("/onboarding", { replace: true, state: { fromAuth: true } });
     } catch (err) {
       setError(err.message || "Login failed.");
     } finally {
