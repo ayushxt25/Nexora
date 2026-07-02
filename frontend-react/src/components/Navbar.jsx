@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { useNotifications } from "../hooks/useNotifications";
 
 const navGroups = [
@@ -305,6 +306,7 @@ function NotificationMenu({ username, mobile = false, onClose }) {
 function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const { themePreference, setThemePreference, themeOptions } = useTheme();
 
   useEffect(() => {
     if (mobile) return undefined;
@@ -345,10 +347,25 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
         <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
           <div className="flex items-center gap-3 text-white/45">
             <Palette className="h-4 w-4" />
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-medium text-white/60">Theme</p>
-              <p className="mt-1 text-xs text-white/40">Not yet available</p>
+              <p className="mt-1 text-xs text-white/40">Dark palette with saved browser preference</p>
             </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {themeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setThemePreference(option.value)}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                  themePreference === option.value
+                    ? "border-accent/30 bg-accent/15 text-white"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -443,10 +460,25 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-white/[0.04]">
                   <Palette className="h-4 w-4" />
                 </span>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm">Theme</p>
-                  <p className="mt-1 text-xs text-white/40">Not yet available</p>
+                  <p className="mt-1 text-xs text-white/40">Dark palette with saved browser preference</p>
                 </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setThemePreference(option.value)}
+                    className={`rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                      themePreference === option.value
+                        ? "border-accent/30 bg-accent/15 text-white"
+                        : "border-white/10 bg-white/5 text-white/60 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
 

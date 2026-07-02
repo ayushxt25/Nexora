@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0a0f;
-  --color-bg-secondary: #13131a;
-  --color-bg-card: #16161f;
-  --color-accent: #7c5cff;
-  --color-accent-secondary: #22d3ee;
+  --color-bg: var(--app-bg);
+  --color-bg-secondary: var(--app-bg-secondary);
+  --color-bg-card: var(--app-bg-card);
+  --color-accent: var(--app-accent);
+  --color-accent-secondary: var(--app-accent-secondary);
   --font-sans: "Inter", system-ui, sans-serif;
 
   --animate-fade-in: fadeIn 0.6s ease-out forwards;
@@ -30,42 +30,85 @@
   box-sizing: border-box;
 }
 
+:root,
+html[data-theme="dark"] {
+  --app-bg: #0a0a0f;
+  --app-bg-secondary: #13131a;
+  --app-bg-card: #16161f;
+  --app-accent: #7c5cff;
+  --app-accent-secondary: #22d3ee;
+  --app-glass: rgba(22, 22, 31, 0.6);
+  --app-scroll-track: #0a0a0f;
+  --app-scroll-thumb: #2a2a35;
+  --app-scroll-thumb-hover: #3a3a45;
+}
+
+html[data-theme="system"] {
+  --app-bg: #0b1020;
+  --app-bg-secondary: #141a2c;
+  --app-bg-card: #182132;
+  --app-accent: #6d7cff;
+  --app-accent-secondary: #38bdf8;
+  --app-glass: rgba(20, 26, 44, 0.72);
+  --app-scroll-track: #0b1020;
+  --app-scroll-thumb: #334155;
+  --app-scroll-thumb-hover: #475569;
+}
+
+@media (prefers-color-scheme: light) {
+  html[data-theme="system"] {
+    --app-bg: #111827;
+    --app-bg-secondary: #172033;
+    --app-bg-card: #1f2937;
+    --app-accent: #5b7cff;
+    --app-accent-secondary: #06b6d4;
+    --app-glass: rgba(17, 24, 39, 0.74);
+    --app-scroll-track: #111827;
+    --app-scroll-thumb: #475569;
+    --app-scroll-thumb-hover: #64748b;
+  }
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   min-height: 100vh;
-  background-color: #0a0a0f;
+  background-color: var(--app-bg);
 }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
   color: #f4f4f5;
+  background:
+    radial-gradient(at 0% 0%, color-mix(in srgb, var(--app-accent) 16%, transparent) 0px, transparent 45%),
+    radial-gradient(at 100% 0%, color-mix(in srgb, var(--app-accent-secondary) 12%, transparent) 0px, transparent 45%),
+    linear-gradient(180deg, var(--app-bg) 0%, var(--app-bg-secondary) 100%);
 }
 
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: var(--app-scroll-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a35;
+  background: var(--app-scroll-thumb);
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a45;
+  background: var(--app-scroll-thumb-hover);
 }
 
 .glass {
-  background: rgba(22, 22, 31, 0.6);
+  background: var(--app-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #7c5cff 0%, #22d3ee 100%);
+  background: linear-gradient(135deg, var(--app-accent) 0%, var(--app-accent-secondary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -73,8 +116,8 @@ body {
 
 .bg-mesh {
   background-image:
-    radial-gradient(at 0% 0%, rgba(124, 92, 255, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(34, 211, 238, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(124, 92, 255, 0.1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(34, 211, 238, 0.08) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, color-mix(in srgb, var(--app-accent) 15%, transparent) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, color-mix(in srgb, var(--app-accent-secondary) 12%, transparent) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, color-mix(in srgb, var(--app-accent) 10%, transparent) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, color-mix(in srgb, var(--app-accent-secondary) 8%, transparent) 0px, transparent 50%);
 }

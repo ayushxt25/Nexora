@@ -12,6 +12,7 @@ import {
 import { useContacts } from "../hooks/useContacts";
 import { api } from "../api/client";
 import DataTable from "../components/ui/DataTable";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import ScoreBadge from "../components/ui/ScoreBadge";
@@ -75,6 +76,16 @@ export default function Contacts() {
       ].sort((a, b) => a.localeCompare(b)),
     [contacts]
   );
+
+  const companySelectOptions = [
+    { value: "", label: "All companies" },
+    ...companyOptions.map((option) => ({ value: option, label: option })),
+  ];
+
+  const tagSelectOptions = [
+    { value: "", label: "All tags" },
+    ...tagOptions.map((option) => ({ value: option, label: option })),
+  ];
 
   async function handleCreate(payload) {
     setSubmitting(true);
@@ -192,46 +203,27 @@ export default function Contacts() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All companies</option>
-            {companyOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setCompany}
+            options={companySelectOptions}
+            placeholder="All companies"
+          />
 
-          <select
+          <CustomSelect
             value={tag}
-            onChange={(event) => setTag(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All tags</option>
-            {tagOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setTag}
+            options={tagSelectOptions}
+            placeholder="All tags"
+          />
 
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <ArrowUpDown className="h-4 w-4 text-white/35" />
-            <select
-              value={sortValue}
-              onChange={(event) => setSortValue(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CustomSelect
+            value={sortValue}
+            onChange={setSortValue}
+            options={SORT_OPTIONS}
+            placeholder="Recently updated"
+            icon={ArrowUpDown}
+          />
         </div>
 
         {!loading && !error && contacts.length > 0 && (

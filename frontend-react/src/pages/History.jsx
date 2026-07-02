@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, History as HistoryIcon, RefreshCw, Search, Sparkles, Tag } from "lucide-react";
 import { api } from "../api/client";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -51,6 +52,11 @@ export default function History() {
         a.localeCompare(b)
       ),
     [history]
+  );
+
+  const themeSelectOptions = useMemo(
+    () => [{ value: "", label: "All themes" }, ...themeOptions.map((theme) => ({ value: theme, label: theme }))],
+    [themeOptions]
   );
 
   const filteredHistory = useMemo(() => {
@@ -129,18 +135,12 @@ export default function History() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={themeFilter}
-            onChange={(event) => setThemeFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All themes</option>
-            {themeOptions.map((theme) => (
-              <option key={theme} value={theme}>
-                {theme}
-              </option>
-            ))}
-          </select>
+            onChange={setThemeFilter}
+            options={themeSelectOptions}
+            placeholder="All themes"
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs text-white/45">

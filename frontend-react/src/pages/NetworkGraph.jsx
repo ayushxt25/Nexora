@@ -17,6 +17,7 @@ import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import Modal from "../components/ui/Modal";
 import FollowUpForm from "../components/domain/FollowUpForm";
+import CustomSelect from "../components/ui/CustomSelect";
 import ScoreBadge from "../components/ui/ScoreBadge";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
 
@@ -274,6 +275,28 @@ function InsightCard({ title, subtitle, icon: Icon, children }) {
   );
 }
 
+const scoreRangeOptions = [
+  { value: "", label: "All score ranges" },
+  { value: "80-100", label: "80-100" },
+  { value: "60-79", label: "60-79" },
+  { value: "40-59", label: "40-59" },
+  { value: "0-39", label: "0-39" },
+];
+
+const activityLevelOptions = [
+  { value: "", label: "All activity levels" },
+  { value: "high", label: "High activity" },
+  { value: "medium", label: "Medium activity" },
+  { value: "low", label: "Low activity" },
+];
+
+const relationshipStrengthOptions = [
+  { value: "", label: "All relationship strength" },
+  { value: "strong", label: "Strong" },
+  { value: "developing", label: "Developing" },
+  { value: "weak", label: "Weak" },
+];
+
 export default function NetworkGraph() {
   const navigate = useNavigate();
   const [graph, setGraph] = useState(null);
@@ -333,6 +356,11 @@ export default function NetworkGraph() {
   const clusterOptions = useMemo(
     () => (graph?.clusters || []).map((cluster) => ({ id: cluster.cluster_id, label: cluster.shared_signals.join(", ") || cluster.cluster_id })),
     [graph]
+  );
+
+  const clusterSelectOptions = useMemo(
+    () => [{ value: "", label: "All clusters" }, ...clusterOptions.map((cluster) => ({ value: cluster.id, label: cluster.label }))],
+    [clusterOptions]
   );
 
   const filteredNodes = useMemo(() => {
@@ -445,55 +473,34 @@ export default function NetworkGraph() {
             />
           </div>
 
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <Filter className="h-4 w-4 text-white/35" />
-            <select
-              value={scoreRange}
-              onChange={(event) => setScoreRange(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              <option value="">All score ranges</option>
-              <option value="80-100">80-100</option>
-              <option value="60-79">60-79</option>
-              <option value="40-59">40-59</option>
-              <option value="0-39">0-39</option>
-            </select>
-          </label>
+          <CustomSelect
+            value={scoreRange}
+            onChange={setScoreRange}
+            options={scoreRangeOptions}
+            placeholder="All score ranges"
+            icon={Filter}
+          />
 
-          <select
+          <CustomSelect
             value={activityLevel}
-            onChange={(event) => setActivityLevel(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All activity levels</option>
-            <option value="high">High activity</option>
-            <option value="medium">Medium activity</option>
-            <option value="low">Low activity</option>
-          </select>
+            onChange={setActivityLevel}
+            options={activityLevelOptions}
+            placeholder="All activity levels"
+          />
 
-          <select
+          <CustomSelect
             value={relationshipStrength}
-            onChange={(event) => setRelationshipStrength(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All relationship strength</option>
-            <option value="strong">Strong</option>
-            <option value="developing">Developing</option>
-            <option value="weak">Weak</option>
-          </select>
+            onChange={setRelationshipStrength}
+            options={relationshipStrengthOptions}
+            placeholder="All relationship strength"
+          />
 
-          <select
+          <CustomSelect
             value={clusterFilter}
-            onChange={(event) => setClusterFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All clusters</option>
-            {clusterOptions.map((cluster) => (
-              <option key={cluster.id} value={cluster.id}>
-                {cluster.label}
-              </option>
-            ))}
-          </select>
+            onChange={setClusterFilter}
+            options={clusterSelectOptions}
+            placeholder="All clusters"
+          />
         </div>
       </section>
 

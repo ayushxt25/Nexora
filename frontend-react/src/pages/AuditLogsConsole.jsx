@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { RefreshCw, ScrollText, Search } from "lucide-react";
 import { api } from "../api/client";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -67,6 +68,28 @@ export default function AuditLogsConsole() {
     [logs]
   );
 
+  const eventTypeSelectOptions = [
+    { value: "", label: "All event types" },
+    ...eventTypeOptions.map((option) => ({ value: option, label: option })),
+  ];
+
+  const statusOptions = [
+    { value: "", label: "All statuses" },
+    { value: "completed", label: "completed" },
+    { value: "attempted", label: "attempted" },
+    { value: "failed", label: "failed" },
+  ];
+
+  const entityTypeSelectOptions = [
+    { value: "", label: "All entity types" },
+    ...entityTypeOptions.map((option) => ({ value: option, label: option })),
+  ];
+
+  const sortOptions = [
+    { value: "desc", label: "Newest first" },
+    { value: "asc", label: "Oldest first" },
+  ];
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-4">
@@ -117,54 +140,34 @@ export default function AuditLogsConsole() {
 
       <section className="glass rounded-2xl p-4 lg:p-5 space-y-4">
         <div className="grid gap-3 lg:grid-cols-4">
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <Search className="h-4 w-4 text-white/35" />
-            <select
-              value={eventType}
-              onChange={(event) => setEventType(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              <option value="">All event types</option>
-              {eventTypeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CustomSelect
+            value={eventType}
+            onChange={setEventType}
+            options={eventTypeSelectOptions}
+            placeholder="All event types"
+            icon={Search}
+          />
 
-          <select
+          <CustomSelect
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/40"
-          >
-            <option value="">All statuses</option>
-            <option value="completed">completed</option>
-            <option value="attempted">attempted</option>
-            <option value="failed">failed</option>
-          </select>
+            onChange={setStatusFilter}
+            options={statusOptions}
+            placeholder="All statuses"
+          />
 
-          <select
+          <CustomSelect
             value={entityType}
-            onChange={(event) => setEntityType(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/40"
-          >
-            <option value="">All entity types</option>
-            {entityTypeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setEntityType}
+            options={entityTypeSelectOptions}
+            placeholder="All entity types"
+          />
 
-          <select
+          <CustomSelect
             value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/40"
-          >
-            <option value="desc">Newest first</option>
-            <option value="asc">Oldest first</option>
-          </select>
+            onChange={setSortOrder}
+            options={sortOptions}
+            placeholder="Newest first"
+          />
         </div>
       </section>
 

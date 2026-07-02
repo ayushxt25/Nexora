@@ -18,6 +18,7 @@ import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import Modal from "../components/ui/Modal";
 import FollowUpForm from "../components/domain/FollowUpForm";
+import CustomSelect from "../components/ui/CustomSelect";
 import ScoreBadge from "../components/ui/ScoreBadge";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
 
@@ -450,11 +451,43 @@ export default function Opportunities() {
   }
 
   const categoryOptions = [
-    "Warm introductions",
-    "Reconnection opportunities",
-    "Relationship growth opportunities",
-    "Event-related opportunities",
-    "Priority opportunities",
+    { value: "", label: "All categories" },
+    { value: "Warm introductions", label: "Warm introductions" },
+    { value: "Reconnection opportunities", label: "Reconnection opportunities" },
+    { value: "Relationship growth opportunities", label: "Relationship growth opportunities" },
+    { value: "Event-related opportunities", label: "Event-related opportunities" },
+    { value: "Priority opportunities", label: "Priority opportunities" },
+  ];
+
+  const contactOptions = [
+    { value: "", label: "All contacts" },
+    ...contacts.map((contact) => ({ value: String(contact.id), label: contact.name })),
+  ];
+
+  const priorityOptions = [
+    { value: "", label: "All priorities" },
+    { value: "85", label: "85+" },
+    { value: "70", label: "70+" },
+    { value: "50", label: "50+" },
+  ];
+
+  const sortOptions = [
+    { value: "priority_desc", label: "Priority high-low" },
+    { value: "priority_asc", label: "Priority low-high" },
+    { value: "relationship_desc", label: "Relationship score" },
+    { value: "opportunity_value", label: "Opportunity value" },
+    { value: "created_desc", label: "Newest first" },
+    { value: "created_asc", label: "Oldest first" },
+  ];
+
+  const statusOptions = [
+    { value: "", label: "All statuses" },
+    { value: "accepted", label: "Accepted" },
+    { value: "dismissed", label: "Dismissed" },
+    { value: "completed", label: "Completed" },
+    { value: "converted_to_follow_up", label: "Converted to follow-up" },
+    { value: "pending", label: "Pending follow-up" },
+    { value: "No linked follow-up", label: "No linked follow-up" },
   ];
 
   if (loading) {
@@ -508,75 +541,43 @@ export default function Opportunities() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All categories</option>
-            {categoryOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setCategory}
+            options={categoryOptions}
+            placeholder="All categories"
+          />
 
-          <select
+          <CustomSelect
             value={contactFilter}
-            onChange={(event) => setContactFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All contacts</option>
-            {contacts.map((contact) => (
-              <option key={contact.id} value={contact.id}>
-                {contact.name}
-              </option>
-            ))}
-          </select>
+            onChange={setContactFilter}
+            options={contactOptions}
+            placeholder="All contacts"
+          />
 
-          <select
+          <CustomSelect
             value={priorityFilter}
-            onChange={(event) => setPriorityFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All priorities</option>
-            <option value="85">85+</option>
-            <option value="70">70+</option>
-            <option value="50">50+</option>
-          </select>
+            onChange={setPriorityFilter}
+            options={priorityOptions}
+            placeholder="All priorities"
+          />
 
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <ArrowUpDown className="h-4 w-4 text-white/35" />
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              <option value="priority_desc">Priority high-low</option>
-              <option value="priority_asc">Priority low-high</option>
-              <option value="relationship_desc">Relationship score</option>
-              <option value="opportunity_value">Opportunity value</option>
-              <option value="created_desc">Newest first</option>
-              <option value="created_asc">Oldest first</option>
-            </select>
-          </label>
+          <CustomSelect
+            value={sortBy}
+            onChange={setSortBy}
+            options={sortOptions}
+            placeholder="Priority high-low"
+            icon={ArrowUpDown}
+          />
         </div>
 
         <div className="grid gap-3 lg:grid-cols-2">
-          <select
+          <CustomSelect
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All statuses</option>
-            <option value="accepted">Accepted</option>
-            <option value="dismissed">Dismissed</option>
-            <option value="completed">Completed</option>
-            <option value="converted_to_follow_up">Converted to follow-up</option>
-            <option value="completed">Completed follow-up</option>
-            <option value="pending">Pending follow-up</option>
-            <option value="No linked follow-up">No linked follow-up</option>
-          </select>
+            onChange={setStatusFilter}
+            options={statusOptions}
+            placeholder="All statuses"
+          />
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/45">
             <span>{filteredOpportunities.length} opportunities</span>
             <span className="text-white/20">•</span>

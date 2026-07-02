@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Radar, RefreshCw, Search } from "lucide-react";
 import { api } from "../api/client";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -10,6 +11,8 @@ import { MiniBarChart } from "../components/ui/SimpleCharts";
 function formatScore(value) {
   return Number(value || 0).toFixed(1);
 }
+
+const topKOptions = [3, 5, 7, 10].map((value) => ({ value, label: `Top ${value}` }));
 
 export default function RetrievalDebugConsole() {
   const [query, setQuery] = useState("");
@@ -125,17 +128,12 @@ export default function RetrievalDebugConsole() {
               placeholder="Preferred recommendation type"
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/40"
             />
-            <select
+            <CustomSelect
               value={topK}
-              onChange={(event) => setTopK(Number(event.target.value))}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/40"
-            >
-              {[3, 5, 7, 10].map((value) => (
-                <option key={value} value={value}>
-                  Top {value}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setTopK(Number(value))}
+              options={topKOptions}
+              placeholder="Top 5"
+            />
           </div>
 
           {error ? <ErrorState message={error} /> : null}

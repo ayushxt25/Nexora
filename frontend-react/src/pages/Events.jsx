@@ -12,6 +12,7 @@ import {
 import { useEvents } from "../hooks/useEvents";
 import { api } from "../api/client";
 import DataTable from "../components/ui/DataTable";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import Modal from "../components/ui/Modal";
 import EventForm from "../components/domain/EventForm";
@@ -59,6 +60,11 @@ export default function Events() {
       ),
     [events]
   );
+
+  const locationSelectOptions = [
+    { value: "", label: "All locations" },
+    ...locationOptions.map((option) => ({ value: option, label: option })),
+  ];
 
   const upcomingCount = useMemo(
     () => events.filter((event) => getEventStatus(event.event_date) === "upcoming").length,
@@ -170,33 +176,20 @@ export default function Events() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={location}
-            onChange={(event) => setLocation(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All locations</option>
-            {locationOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setLocation}
+            options={locationSelectOptions}
+            placeholder="All locations"
+          />
 
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <ArrowUpDown className="h-4 w-4 text-white/35" />
-            <select
-              value={sortValue}
-              onChange={(event) => setSortValue(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CustomSelect
+            value={sortValue}
+            onChange={setSortValue}
+            options={SORT_OPTIONS}
+            placeholder="Soonest first"
+            icon={ArrowUpDown}
+          />
         </div>
 
         {!loading && !error && events.length > 0 && (

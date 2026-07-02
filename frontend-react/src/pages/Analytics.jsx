@@ -19,6 +19,7 @@ import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import Modal from "../components/ui/Modal";
 import FollowUpForm from "../components/domain/FollowUpForm";
+import CustomSelect from "../components/ui/CustomSelect";
 import ScoreBadge from "../components/ui/ScoreBadge";
 import StatCard from "../components/ui/StatCard";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -73,6 +74,47 @@ function InsightCard({ title, subtitle, icon: Icon, children }) {
     </section>
   );
 }
+
+const dateRangeOptions = [
+  { value: "all", label: "All time" },
+  { value: "30d", label: "Last 30d" },
+  { value: "90d", label: "Last 90d" },
+];
+
+const relationshipCategoryOptions = [
+  { value: "", label: "All relationship categories" },
+  { value: "weak", label: "Weak" },
+  { value: "developing", label: "Developing" },
+  { value: "healthy", label: "Healthy" },
+  { value: "strong", label: "Strong" },
+  { value: "strategic", label: "Strategic" },
+  { value: "high", label: "High risk" },
+  { value: "medium", label: "Medium risk" },
+  { value: "low", label: "Low risk" },
+];
+
+const scoreRangeOptions = [
+  { value: "", label: "All score ranges" },
+  { value: "80-100", label: "80-100" },
+  { value: "60-79", label: "60-79" },
+  { value: "40-59", label: "40-59" },
+  { value: "0-39", label: "0-39" },
+];
+
+const activityLevelOptions = [
+  { value: "", label: "All activity levels" },
+  { value: "high", label: "High activity" },
+  { value: "medium", label: "Medium activity" },
+  { value: "low", label: "Low activity" },
+];
+
+const sortOptions = [
+  { value: "score_desc", label: "Score" },
+  { value: "score_asc", label: "Score low-high" },
+  { value: "trend_direction", label: "Trend direction" },
+  { value: "recent_activity", label: "Recent activity" },
+  { value: "opportunity_count", label: "Opportunity count" },
+];
 
 export default function Analytics() {
   const navigate = useNavigate();
@@ -302,72 +344,42 @@ export default function Analytics() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={dateRange}
-            onChange={(event) => setDateRange(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="all">All time</option>
-            <option value="30d">Last 30d</option>
-            <option value="90d">Last 90d</option>
-          </select>
+            onChange={setDateRange}
+            options={dateRangeOptions}
+            placeholder="All time"
+          />
 
-          <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-            <Filter className="h-4 w-4 text-white/35" />
-            <select
-              value={relationshipCategory}
-              onChange={(event) => setRelationshipCategory(event.target.value)}
-              className="w-full bg-transparent text-sm text-white focus:outline-none"
-            >
-              <option value="">All relationship categories</option>
-              <option value="weak">Weak</option>
-              <option value="developing">Developing</option>
-              <option value="healthy">Healthy</option>
-              <option value="strong">Strong</option>
-              <option value="strategic">Strategic</option>
-              <option value="high">High risk</option>
-              <option value="medium">Medium risk</option>
-              <option value="low">Low risk</option>
-            </select>
-          </label>
+          <CustomSelect
+            value={relationshipCategory}
+            onChange={setRelationshipCategory}
+            options={relationshipCategoryOptions}
+            placeholder="All relationship categories"
+            icon={Filter}
+          />
 
-          <select
+          <CustomSelect
             value={scoreRange}
-            onChange={(event) => setScoreRange(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All score ranges</option>
-            <option value="80-100">80-100</option>
-            <option value="60-79">60-79</option>
-            <option value="40-59">40-59</option>
-            <option value="0-39">0-39</option>
-          </select>
+            onChange={setScoreRange}
+            options={scoreRangeOptions}
+            placeholder="All score ranges"
+          />
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <select
+            <CustomSelect
               value={activityLevel}
-              onChange={(event) => setActivityLevel(event.target.value)}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-            >
-              <option value="">All activity levels</option>
-              <option value="high">High activity</option>
-              <option value="medium">Medium activity</option>
-              <option value="low">Low activity</option>
-            </select>
-            <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/70">
-              <ArrowUpDown className="h-4 w-4 text-white/35" />
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                className="w-full bg-transparent text-sm text-white focus:outline-none"
-              >
-                <option value="score_desc">Score</option>
-                <option value="score_asc">Score low-high</option>
-                <option value="trend_direction">Trend direction</option>
-                <option value="recent_activity">Recent activity</option>
-                <option value="opportunity_count">Opportunity count</option>
-              </select>
-            </label>
+              onChange={setActivityLevel}
+              options={activityLevelOptions}
+              placeholder="All activity levels"
+            />
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={sortOptions}
+              placeholder="Score"
+              icon={ArrowUpDown}
+            />
           </div>
         </div>
       </section>

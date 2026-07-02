@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { CircleHelp, Palette, Settings as SettingsIcon, ShieldCheck, Sparkles, UserCircle2 } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -13,6 +14,7 @@ function toneLabel(value) {
 
 export default function Settings() {
   const { username, isAuthenticated } = useAuth();
+  const { themePreference, setThemePreference, themeOptions } = useTheme();
   const [profile, setProfile] = useState(null);
   const [personalization, setPersonalization] = useState(null);
   const [feedbackSummary, setFeedbackSummary] = useState(null);
@@ -130,12 +132,36 @@ export default function Settings() {
             <Palette className="h-4 w-4 text-accent" />
             <h2 className="text-base font-semibold text-white">Theme</h2>
           </div>
-          <div className="mt-4">
-            <EmptyState
-              icon={Palette}
-              title="Theme switching is not available yet"
-              description="The current frontend does not implement a real theme toggle yet, so no theme state is exposed here."
-            />
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-white/55">
+              Theme preference is stored locally in this browser and applied globally across the app shell.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {themeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setThemePreference(option.value)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                    themePreference === option.value
+                      ? "border-accent/30 bg-accent/12"
+                      : "border-white/8 bg-white/[0.03] hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <p className="text-sm font-medium text-white">{option.label}</p>
+                  <p className="mt-1 text-xs text-white/45">
+                    {option.value === "dark"
+                      ? "Lock the interface to the current dark presentation."
+                      : "Use the adaptive dark-safe palette and preserve browser theme preference."}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-white/35">Current preference</p>
+              <p className="mt-2 text-sm text-white/75">
+                {themeOptions.find((option) => option.value === themePreference)?.label || "System"}
+              </p>
+            </div>
           </div>
         </section>
 

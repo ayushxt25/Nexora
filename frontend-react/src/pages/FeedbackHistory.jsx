@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MessageSquareHeart, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 import { api } from "../api/client";
+import CustomSelect from "../components/ui/CustomSelect";
 import EmptyState from "../components/ui/EmptyState";
 import ErrorState from "../components/ui/ErrorState";
 import { SkeletonCard } from "../components/ui/SkeletonLoader";
@@ -50,6 +51,11 @@ export default function FeedbackHistory() {
         a.localeCompare(b)
       ),
     [entries]
+  );
+
+  const targetSelectOptions = useMemo(
+    () => [{ value: "", label: "All target types" }, ...targetOptions.map((option) => ({ value: option, label: option }))],
+    [targetOptions]
   );
 
   const filteredEntries = useMemo(() => {
@@ -150,18 +156,12 @@ export default function FeedbackHistory() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={targetFilter}
-            onChange={(event) => setTargetFilter(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50"
-          >
-            <option value="">All target types</option>
-            {targetOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={setTargetFilter}
+            options={targetSelectOptions}
+            placeholder="All target types"
+          />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
