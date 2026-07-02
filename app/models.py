@@ -398,3 +398,20 @@ class RelationshipScoreResponse(BaseModel):
 class RelationshipScoreListResponse(BaseModel):
     scores: List[RelationshipScoreResponse]
     created_at: datetime
+
+
+class OpportunityResponse(BaseModel):
+    opportunity_id: str
+    opportunity_type: str
+    title: str
+    description: str
+    priority_score: float
+    urgency: str
+    confidence: float
+    reason: str
+    related_contact_id: Optional[int] = None
+    related_event_id: Optional[int] = None
+    related_follow_up_id: Optional[int] = None
+    recommended_action: str
+    supporting_signals: List[str]
+    created_at: datetime
