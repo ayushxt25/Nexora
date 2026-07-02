@@ -26,6 +26,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.roles import DEFAULT_ROLE
 
 
 def _utcnow() -> datetime:
@@ -37,6 +38,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(64), unique=True, nullable=False, index=True)
+    supabase_user_id = Column(String(255), unique=True, nullable=True, index=True)
+    role = Column(String(32), nullable=False, default=DEFAULT_ROLE, server_default=DEFAULT_ROLE, index=True)
     hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=_utcnow, nullable=False)
 
@@ -244,3 +247,5 @@ class UserProfile(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
 
     user = relationship("User", back_populates="profile")
+
+
