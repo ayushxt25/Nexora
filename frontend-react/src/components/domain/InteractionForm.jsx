@@ -9,11 +9,15 @@ export default function InteractionForm({ contactId, onSubmit, onCancel, submitt
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+    if (!notes.trim()) {
+      setError("Notes are required.");
+      return;
+    }
     try {
       await onSubmit({
         contact_id: contactId,
         interaction_type: interactionType,
-        notes: notes.trim() || null,
+        notes: notes.trim(),
         sentiment,
       });
     } catch (err) {

@@ -139,6 +139,7 @@ export const api = {
   },
 
   recommendations: {
+    list: (params) => request(`/recommendations${buildQuery(params)}`, { method: "GET" }),
     nextBestActions: (limit) =>
       request(`/recommendations/next-best-actions${buildQuery({ limit })}`, { method: "GET" }),
   },

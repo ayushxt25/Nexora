@@ -31,11 +31,19 @@ export default function ContactForm({ initialValues, onSubmit, onCancel, submitt
       setError("Name is required.");
       return;
     }
+    if (!form.company.trim()) {
+      setError("Company is required.");
+      return;
+    }
+    if (!form.role.trim()) {
+      setError("Role is required.");
+      return;
+    }
 
     const payload = {
       name: form.name.trim(),
-      company: form.company.trim() || null,
-      role: form.role.trim() || null,
+      company: form.company.trim(),
+      role: form.role.trim(),
       email: form.email.trim() || null,
       linkedin_url: form.linkedin_url.trim() || null,
       notes: form.notes.trim() || null,

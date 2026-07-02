@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { Sparkles, Tag, AlertCircle } from "lucide-react";
 import { api } from "../api/client";
 import Button from "../components/Button";
@@ -14,6 +15,7 @@ const examplePrompts = [
 ];
 
 export default function Generate() {
+  const location = useLocation();
   const [description, setDescription] = useState("");
   const [interests, setInterests] = useState("");
   const [themes, setThemes] = useState([]);
@@ -21,6 +23,13 @@ export default function Generate() {
   const [feedbackGiven, setFeedbackGiven] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const prefill = location.state?.prefill;
+    if (!prefill) return;
+    if (prefill.description) setDescription(prefill.description);
+    if (prefill.interests) setInterests(prefill.interests);
+  }, [location.state]);
 
   async function handleGenerate(e) {
     e?.preventDefault();
