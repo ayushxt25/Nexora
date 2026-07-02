@@ -376,3 +376,25 @@ class NetworkGraphInsightsResponse(BaseModel):
     isolated_contacts: List[GraphContactInsightResponse]
     clusters: List[GraphClusterResponse]
     created_at: datetime
+
+
+class RelationshipScoreFactorsResponse(BaseModel):
+    interaction_score: float
+    recency_score: float
+    graph_score: float
+    recommendation_score: float
+    interest_overlap_score: float
+
+
+class RelationshipScoreResponse(BaseModel):
+    contact_id: int
+    name: str
+    score: float
+    relationship_strength: str
+    relationship_risk: str
+    factors: RelationshipScoreFactorsResponse
+
+
+class RelationshipScoreListResponse(BaseModel):
+    scores: List[RelationshipScoreResponse]
+    created_at: datetime

@@ -35,6 +35,7 @@ from app.routes.conversation import router as conversation_router
 from app.routes.network import router as network_router
 from app.routes.recommendations import router as recommendations_router
 from app.routes.relationship_data import router as relationship_data_router
+from app.routes.relationship_scores import router as relationship_scores_router
 from app.services.health_service import get_dependency_health
 
 correlation_id_var = contextvars.ContextVar("correlation_id", default="-")
@@ -178,6 +179,7 @@ def on_startup() -> None:
 app.include_router(auth_router)
 app.include_router(conversation_router)
 app.include_router(relationship_data_router)
+app.include_router(relationship_scores_router)
 app.include_router(recommendations_router)
 app.include_router(analytics_router)
 app.include_router(audit_router)
