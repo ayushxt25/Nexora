@@ -9,30 +9,40 @@ function isSameDay(a, b) {
   );
 }
 
+function isCompletedStatus(status) {
+  const normalized = (status || "").toLowerCase();
+  return ["completed", "complete", "done", "closed"].includes(normalized);
+}
+
 export function groupFollowUps(followUps) {
   const now = new Date();
-  const groups = { overdue: [], today: [], upcoming: [], noDate: [] };
+  const groups = { overdue: [], today: [], upcoming: [], noDate: [], completed: [] };
 
-  for (const f of followUps) {
-    if (f.status === "completed") continue;
-    if (!f.due_date) {
-      groups.noDate.push(f);
+  for (const followUp of followUps) {
+    if (isCompletedStatus(followUp.status)) {
+      groups.completed.push(followUp);
       continue;
     }
-    const due = new Date(f.due_date);
+
+    if (!followUp.due_date) {
+      groups.noDate.push(followUp);
+      continue;
+    }
+
+    const due = new Date(followUp.due_date);
     if (isSameDay(due, now)) {
-      groups.today.push(f);
+      groups.today.push(followUp);
     } else if (due < now) {
-      groups.overdue.push(f);
+      groups.overdue.push(followUp);
     } else {
-      groups.upcoming.push(f);
+      groups.upcoming.push(followUp);
     }
   }
 
   return groups;
 }
 
-export function useFollowUps({ statusFilter } = {}) {
+export function useFollowUps({ statusFilter, contactId, eventId, sortBy = "due_date", sortOrder = "asc" } = {}) {
   const [followUps, setFollowUps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,8 +53,10 @@ export function useFollowUps({ statusFilter } = {}) {
     try {
       const data = await api.followUps.list({
         status: statusFilter,
-        sort_by: "due_date",
-        sort_order: "asc",
+        contact_id: contactId,
+        event_id: eventId,
+        sort_by: sortBy,
+        sort_order: sortOrder,
         limit: 100,
       });
       setFollowUps(data);
@@ -53,7 +65,7 @@ export function useFollowUps({ statusFilter } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [contactId, eventId, sortBy, sortOrder, statusFilter]);
 
   useEffect(() => {
     fetchFollowUps();
