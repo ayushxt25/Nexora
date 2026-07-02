@@ -1,4 +1,19 @@
 import { useState } from "react";
+import CustomSelect from "../ui/CustomSelect";
+
+const interactionTypeOptions = [
+  { value: "call", label: "Call" },
+  { value: "email", label: "Email" },
+  { value: "meeting", label: "Meeting" },
+  { value: "message", label: "Message" },
+  { value: "event", label: "Event" },
+];
+
+const sentimentOptions = [
+  { value: "positive", label: "Positive" },
+  { value: "neutral", label: "Neutral" },
+  { value: "negative", label: "Negative" },
+];
 
 export default function InteractionForm({ contactId, onSubmit, onCancel, submitting }) {
   const [interactionType, setInteractionType] = useState("call");
@@ -29,27 +44,19 @@ export default function InteractionForm({ contactId, onSubmit, onCancel, submitt
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <select
+      <CustomSelect
         value={interactionType}
-        onChange={(e) => setInteractionType(e.target.value)}
-        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent/50"
-      >
-        <option value="call">Call</option>
-        <option value="email">Email</option>
-        <option value="meeting">Meeting</option>
-        <option value="message">Message</option>
-        <option value="event">Event</option>
-      </select>
+        onChange={setInteractionType}
+        options={interactionTypeOptions}
+        placeholder="Call"
+      />
 
-      <select
+      <CustomSelect
         value={sentiment}
-        onChange={(e) => setSentiment(e.target.value)}
-        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent/50"
-      >
-        <option value="positive">Positive</option>
-        <option value="neutral">Neutral</option>
-        <option value="negative">Negative</option>
-      </select>
+        onChange={setSentiment}
+        options={sentimentOptions}
+        placeholder="Neutral"
+      />
 
       <textarea
         placeholder="What happened?"
