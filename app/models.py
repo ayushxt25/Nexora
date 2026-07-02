@@ -452,6 +452,19 @@ class ActionLifecycleStateResponse(BaseModel):
     updated_at: datetime
 
 
+class ActionLifecycleConvertToFollowUpRequest(FollowUpCreate):
+    entity_kind: Literal["recommendation", "opportunity"]
+    entity_id: str = Field(..., min_length=1, max_length=128)
+    entity_type: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    notes: Optional[str] = None
+
+
+class ActionLifecycleConvertToFollowUpResponse(BaseModel):
+    follow_up: FollowUpResponse
+    lifecycle_state: ActionLifecycleStateResponse
+    converted_follow_up_id: int
+
+
 class PersonalizationProfileResponse(BaseModel):
     preference_vector: dict[str, float]
     preferred_opportunity_types: List[str]

@@ -54,6 +54,7 @@ def upsert_lifecycle_state(
     converted_follow_up_id: Optional[int] = None,
     notes: Optional[str] = None,
     mark_seen: bool = False,
+    commit: bool = True,
 ) -> ActionLifecycleState:
     if entity_kind not in VALID_ENTITY_KINDS:
         raise ValueError(f"entity_kind must be one of {VALID_ENTITY_KINDS}")
@@ -94,8 +95,11 @@ def upsert_lifecycle_state(
             state.last_seen_at = now
         _apply_status_timestamps(state, status, now)
 
-    db.commit()
-    db.refresh(state)
+    if commit:
+        db.commit()
+        db.refresh(state)
+    else:
+        db.flush()
     return state
 
 
