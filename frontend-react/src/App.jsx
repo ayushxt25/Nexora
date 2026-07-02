@@ -8,6 +8,7 @@ import Recommendations from "./pages/Recommendations";
 import Opportunities from "./pages/Opportunities";
 import RelationshipScores from "./pages/RelationshipScores";
 import Analytics from "./pages/Analytics";
+import NetworkGraph from "./pages/NetworkGraph";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/relationship-scores" element={<RelationshipScores />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/network-graph" element={<NetworkGraph />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

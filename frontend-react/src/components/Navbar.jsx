@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Users2, LayoutDashboard, Sparkles, Search, History,
-  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp,
+  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp, Network,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -35,6 +35,7 @@ const navGroups = [
     label: "Insights",
     items: [
       { to: "/relationship-scores", label: "Relationship Scores", icon: TrendingUp },
+      { to: "/network-graph", label: "Network Graph", icon: Network },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/history", label: "History", icon: History },
       { to: "/feedback-history", label: "Feedback", icon: MessageSquareHeart },
