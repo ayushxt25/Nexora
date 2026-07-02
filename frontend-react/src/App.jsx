@@ -4,6 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import FollowUps from "./pages/FollowUps";
 import Events from "./pages/Events";
+import Recommendations from "./pages/Recommendations";
+import Opportunities from "./pages/Opportunities";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -40,6 +42,8 @@ function AppRoutes() {
         <Route path="/feedback-history" element={<FeedbackHistory />} />
         <Route path="/follow-ups" element={<FollowUps />} />
         <Route path="/events" element={<Events />} />
+        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/opportunities" element={<Opportunities />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

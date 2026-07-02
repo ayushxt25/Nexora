@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Users2, LayoutDashboard, Sparkles, Search, History,
-  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown,
+  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +13,8 @@ const navGroups = [
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/follow-ups", label: "Follow-ups", icon: ListChecks },
+      { to: "/recommendations", label: "Recommendations", icon: Lightbulb },
+      { to: "/opportunities", label: "Opportunities", icon: Target },
     ],
   },
   {

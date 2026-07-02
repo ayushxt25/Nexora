@@ -1,9 +1,16 @@
 import { useState } from "react";
 
-export default function FollowUpForm({ contactId, onSubmit, onCancel, submitting }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
+export default function FollowUpForm({
+  contactId,
+  eventId,
+  initialValues,
+  onSubmit,
+  onCancel,
+  submitting,
+}) {
+  const [title, setTitle] = useState(initialValues?.title || "");
+  const [description, setDescription] = useState(initialValues?.description || "");
+  const [dueDate, setDueDate] = useState(initialValues?.dueDate || "");
   const [error, setError] = useState(null);
 
   async function handleSubmit(e) {
@@ -18,6 +25,7 @@ export default function FollowUpForm({ contactId, onSubmit, onCancel, submitting
     try {
       await onSubmit({
         contact_id: contactId,
+        event_id: eventId,
         title: title.trim(),
         description: description.trim() || null,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,

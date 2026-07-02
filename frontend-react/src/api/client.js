@@ -88,6 +88,9 @@ export const api = {
   sendFeedback: (suggestion, action) =>
     request("/feedback", { method: "POST", body: { suggestion, action } }),
 
+  submitFeedback: (body) =>
+    request("/feedback", { method: "POST", body }),
+
   factCheck: (query) =>
     request("/fact-check", { method: "POST", body: { query } }),
 
