@@ -140,6 +140,12 @@ export const api = {
     remove: (id) => request(`/follow-ups/${id}`, { method: "DELETE" }),
   },
 
+  profile: {
+    get: () => request("/profile", { method: "GET" }),
+    update: (body) => request("/profile", { method: "PUT", body }),
+    remove: () => request("/profile", { method: "DELETE" }),
+  },
+
   relationshipScores: {
     list: (contactId) =>
       request(`/relationships/scores${buildQuery({ contact_id: contactId })}`, { method: "GET" }),

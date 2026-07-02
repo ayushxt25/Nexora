@@ -12,6 +12,9 @@ import History from "./pages/History";
 import FeedbackHistory from "./pages/FeedbackHistory";
 import Contacts from "./pages/Contacts";
 import ContactProfile from "./pages/ContactProfile";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 
 const Generate = lazy(() => import("./pages/Generate"));
 const FactCheck = lazy(() => import("./pages/FactCheck"));
@@ -57,6 +60,9 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/contacts/:id" element={<ContactProfile />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/generate" element={withSuspense(<Generate />)} />
         <Route path="/fact-check" element={withSuspense(<FactCheck />)} />
         <Route path="/history" element={<History />} />

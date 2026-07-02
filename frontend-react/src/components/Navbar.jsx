@@ -51,10 +51,9 @@ const developerConsoleItems = [
 ];
 
 const accountItems = [
-  { label: "Profile", icon: UserCircle2 },
-  { label: "Settings", icon: Settings },
-  { label: "Theme", icon: Palette },
-  { label: "Help", icon: CircleHelp },
+  { label: "Profile", icon: UserCircle2, to: "/profile" },
+  { label: "Settings", icon: Settings, to: "/settings" },
+  { label: "Help", icon: CircleHelp, to: "/help" },
 ];
 
 function NavDropdown({ group, isActive }) {
@@ -145,16 +144,27 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
         </div>
 
         <div className="space-y-1">
-          {accountItems.map(({ label, icon: Icon }) => (
-            <button
+          {accountItems.map(({ label, icon: Icon, to }) => (
+            <Link
               key={label}
-              type="button"
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/45 bg-white/[0.02] cursor-default"
+              to={to}
+              onClick={onClose}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
             >
               <Icon className="w-4 h-4" />
               {label}
-            </button>
+            </Link>
           ))}
+        </div>
+
+        <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
+          <div className="flex items-center gap-3 text-white/45">
+            <Palette className="w-4 h-4" />
+            <div>
+              <p className="text-sm font-medium text-white/60">Theme</p>
+              <p className="mt-1 text-xs text-white/40">Not yet available</p>
+            </div>
+          </div>
         </div>
 
         {isAdmin ? (
@@ -228,18 +238,31 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
             </div>
 
             <div className="mt-2 space-y-1">
-              {accountItems.map(({ label, icon: Icon }) => (
-                <button
+              {accountItems.map(({ label, icon: Icon, to }) => (
+                <Link
                   key={label}
-                  type="button"
-                  className="w-full flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white cursor-default"
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
                 >
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-white/[0.04]">
                     <Icon className="w-4 h-4" />
                   </span>
                   {label}
-                </button>
+                </Link>
               ))}
+            </div>
+
+            <div className="mt-2 rounded-2xl border border-white/8 bg-white/[0.03] px-3.5 py-3">
+              <div className="flex items-center gap-3 text-white/60">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-white/[0.04]">
+                  <Palette className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-sm">Theme</p>
+                  <p className="mt-1 text-xs text-white/40">Not yet available</p>
+                </div>
+              </div>
             </div>
 
             {isAdmin ? (
