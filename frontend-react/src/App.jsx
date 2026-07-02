@@ -1,27 +1,41 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LoadingSpinner from "./components/LoadingSpinner";
 import DashboardLayout from "./layouts/DashboardLayout";
 import FollowUps from "./pages/FollowUps";
 import Events from "./pages/Events";
-import Recommendations from "./pages/Recommendations";
-import Opportunities from "./pages/Opportunities";
-import RelationshipScores from "./pages/RelationshipScores";
-import Analytics from "./pages/Analytics";
-import NetworkGraph from "./pages/NetworkGraph";
-import MetricsConsole from "./pages/MetricsConsole";
-import AuditLogsConsole from "./pages/AuditLogsConsole";
-import RetrievalDebugConsole from "./pages/RetrievalDebugConsole";
-import RankerToolsConsole from "./pages/RankerToolsConsole";
-
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Generate from "./pages/Generate";
-import FactCheck from "./pages/FactCheck";
 import History from "./pages/History";
 import FeedbackHistory from "./pages/FeedbackHistory";
 import Contacts from "./pages/Contacts";
 import ContactProfile from "./pages/ContactProfile";
+
+const Generate = lazy(() => import("./pages/Generate"));
+const FactCheck = lazy(() => import("./pages/FactCheck"));
+const Recommendations = lazy(() => import("./pages/Recommendations"));
+const Opportunities = lazy(() => import("./pages/Opportunities"));
+const RelationshipScores = lazy(() => import("./pages/RelationshipScores"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const NetworkGraph = lazy(() => import("./pages/NetworkGraph"));
+const MetricsConsole = lazy(() => import("./pages/MetricsConsole"));
+const AuditLogsConsole = lazy(() => import("./pages/AuditLogsConsole"));
+const RetrievalDebugConsole = lazy(() => import("./pages/RetrievalDebugConsole"));
+const RankerToolsConsole = lazy(() => import("./pages/RankerToolsConsole"));
+
+function RouteFallback() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <LoadingSpinner label="Loading workspace..." />
+    </div>
+  );
+}
+
+function withSuspense(element) {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
+}
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -43,21 +57,21 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/contacts/:id" element={<ContactProfile />} />
-        <Route path="/generate" element={<Generate />} />
-        <Route path="/fact-check" element={<FactCheck />} />
+        <Route path="/generate" element={withSuspense(<Generate />)} />
+        <Route path="/fact-check" element={withSuspense(<FactCheck />)} />
         <Route path="/history" element={<History />} />
         <Route path="/feedback-history" element={<FeedbackHistory />} />
         <Route path="/follow-ups" element={<FollowUps />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/recommendations" element={<Recommendations />} />
-        <Route path="/opportunities" element={<Opportunities />} />
-        <Route path="/relationship-scores" element={<RelationshipScores />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/network-graph" element={<NetworkGraph />} />
-        <Route path="/developer/metrics" element={<MetricsConsole />} />
-        <Route path="/developer/audit-logs" element={<AuditLogsConsole />} />
-        <Route path="/developer/retrieval-debug" element={<RetrievalDebugConsole />} />
-        <Route path="/developer/ranker-tools" element={<RankerToolsConsole />} />
+        <Route path="/recommendations" element={withSuspense(<Recommendations />)} />
+        <Route path="/opportunities" element={withSuspense(<Opportunities />)} />
+        <Route path="/relationship-scores" element={withSuspense(<RelationshipScores />)} />
+        <Route path="/analytics" element={withSuspense(<Analytics />)} />
+        <Route path="/network-graph" element={withSuspense(<NetworkGraph />)} />
+        <Route path="/developer/metrics" element={withSuspense(<MetricsConsole />)} />
+        <Route path="/developer/audit-logs" element={withSuspense(<AuditLogsConsole />)} />
+        <Route path="/developer/retrieval-debug" element={withSuspense(<RetrievalDebugConsole />)} />
+        <Route path="/developer/ranker-tools" element={withSuspense(<RankerToolsConsole />)} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

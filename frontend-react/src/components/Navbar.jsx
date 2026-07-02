@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Users2, LayoutDashboard, Sparkles, Search, History,
-  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp, Network, Activity, ScrollText, Radar, BrainCircuit,
+  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp, Network, Activity, ScrollText, Radar, BrainCircuit, UserCircle2, Settings, Palette, CircleHelp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -41,16 +41,20 @@ const navGroups = [
       { to: "/feedback-history", label: "Feedback", icon: MessageSquareHeart },
     ],
   },
-  {
-    label: "Developer / Admin",
-    tone: "developer",
-    items: [
-      { to: "/developer/metrics", label: "Metrics", icon: Activity },
-      { to: "/developer/audit-logs", label: "Audit Logs", icon: ScrollText },
-      { to: "/developer/retrieval-debug", label: "Retrieval Debug", icon: Radar },
-      { to: "/developer/ranker-tools", label: "Ranker Tools", icon: BrainCircuit },
-    ],
-  },
+];
+
+const developerConsoleItems = [
+  { to: "/developer/metrics", label: "Metrics", icon: Activity },
+  { to: "/developer/audit-logs", label: "Audit Logs", icon: ScrollText },
+  { to: "/developer/retrieval-debug", label: "Retrieval Debug", icon: Radar },
+  { to: "/developer/ranker-tools", label: "Ranker Tools", icon: BrainCircuit },
+];
+
+const accountItems = [
+  { label: "Profile", icon: UserCircle2 },
+  { label: "Settings", icon: Settings },
+  { label: "Theme", icon: Palette },
+  { label: "Help", icon: CircleHelp },
 ];
 
 function NavDropdown({ group, isActive }) {
@@ -114,10 +118,181 @@ function NavDropdown({ group, isActive }) {
   );
 }
 
+function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (mobile) return undefined;
+    function handleClickOutside(event) {
+      if (ref.current && !ref.current.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobile]);
+
+  const activeDeveloperRoute = developerConsoleItems.some((item) => window.location.pathname === item.to);
+
+  if (mobile) {
+    return (
+      <div className="space-y-2">
+        <div className="px-3">
+          <p className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2">Account</p>
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
+            <p className="text-sm font-medium text-white">{username || "User"}</p>
+            <p className="mt-1 text-xs text-white/40">Workspace menu</p>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          {accountItems.map(({ label, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/45 bg-white/[0.02] cursor-default"
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {isAdmin ? (
+          <div className="pt-2 border-t border-amber-500/10">
+            <p className="text-xs font-medium text-amber-200/70 uppercase tracking-wide px-3 mb-1">
+              Developer Console
+            </p>
+            <div className="space-y-1">
+              {developerConsoleItems.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-100/75 hover:text-amber-50 hover:bg-amber-500/10"
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((value) => !value)}
+        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
+          open || activeDeveloperRoute
+            ? "border-white/12 bg-white/10 text-white shadow-[0_12px_30px_rgba(10,14,24,0.28)]"
+            : "border-transparent text-white/60 hover:text-white hover:bg-white/5 hover:border-white/10"
+        }`}
+      >
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/12 bg-white/6">
+          <UserCircle2 className="h-4 w-4" />
+        </span>
+        <span className="max-w-[140px] truncate text-left font-medium">{username || "User"}</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.985 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute right-0 top-full mt-3 w-[320px] overflow-hidden rounded-3xl border border-white/12 bg-[rgba(10,14,24,0.92)] p-2.5 shadow-[0_28px_90px_rgba(2,6,23,0.68)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[rgba(10,14,24,0.8)] z-[90]"
+          >
+            <div className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/[0.03]">
+                  <UserCircle2 className="h-5 w-5 text-white/75" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{username || "User"}</p>
+                  <p className="mt-1 text-xs text-white/45">Account menu</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 space-y-1">
+              {accountItems.map(({ label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="w-full flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white cursor-default"
+                >
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-white/[0.04]">
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {isAdmin ? (
+              <div className="mt-2 border-t border-white/8 pt-3">
+                <p className="px-3.5 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-200/70">
+                  Developer Console
+                </p>
+                <div className="space-y-1">
+                  {developerConsoleItems.map(({ to, label, icon: Icon }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-amber-100/80 transition-colors hover:bg-amber-500/12 hover:text-amber-50"
+                    >
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-amber-500/15 bg-amber-500/10">
+                        <Icon className="w-4 h-4" />
+                      </span>
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-2 border-t border-white/8 pt-3">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onLogout();
+                }}
+                className="w-full flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+              >
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/15 bg-red-500/10">
+                  <LogOut className="w-4 h-4" />
+                </span>
+                Logout
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { username, logout } = useAuth();
+  // TODO: Replace this temporary username-based admin check with `user.role === "admin"`
+  // once Supabase auth and real backend role claims are available.
+  const isAdmin = username === "ayush2522";
 
   return (
     <>
@@ -144,14 +319,7 @@ export default function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <span className="text-sm text-white/50">{username}</span>
-              <button
-                onClick={logout}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+              <UserMenu username={username} isAdmin={isAdmin} onLogout={logout} />
             </div>
 
             <button
@@ -193,16 +361,16 @@ export default function Navbar() {
                 </div>
               </div>
             ))}
-            <button
-              onClick={() => {
+            <UserMenu
+              mobile
+              username={username}
+              isAdmin={isAdmin}
+              onClose={() => setMobileOpen(false)}
+              onLogout={() => {
                 setMobileOpen(false);
                 logout();
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+            />
           </div>
         )}
       </nav>
