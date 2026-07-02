@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu, X, Users2, LayoutDashboard, Sparkles, Search, History,
-  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp, Network,
+  MessageSquareHeart, LogOut, ListChecks, CalendarDays, ChevronDown, Lightbulb, Target, BarChart3, TrendingUp, Network, Activity, ScrollText, Radar, BrainCircuit,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
@@ -41,6 +41,16 @@ const navGroups = [
       { to: "/feedback-history", label: "Feedback", icon: MessageSquareHeart },
     ],
   },
+  {
+    label: "Developer / Admin",
+    tone: "developer",
+    items: [
+      { to: "/developer/metrics", label: "Metrics", icon: Activity },
+      { to: "/developer/audit-logs", label: "Audit Logs", icon: ScrollText },
+      { to: "/developer/retrieval-debug", label: "Retrieval Debug", icon: Radar },
+      { to: "/developer/ranker-tools", label: "Ranker Tools", icon: BrainCircuit },
+    ],
+  },
 ];
 
 function NavDropdown({ group, isActive }) {
@@ -60,7 +70,13 @@ function NavDropdown({ group, isActive }) {
       <button
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-          isActive ? "bg-accent/15 text-accent" : "text-white/60 hover:text-white hover:bg-white/5"
+          isActive
+            ? group.tone === "developer"
+              ? "bg-amber-500/15 text-amber-300"
+              : "bg-accent/15 text-accent"
+            : group.tone === "developer"
+              ? "text-amber-200/75 hover:text-amber-100 hover:bg-amber-500/10 border border-amber-500/15"
+              : "text-white/60 hover:text-white hover:bg-white/5"
         }`}
       >
         {group.label}
@@ -81,7 +97,11 @@ function NavDropdown({ group, isActive }) {
                 key={to}
                 to={to}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                  group.tone === "developer"
+                    ? "text-amber-100/75 hover:text-amber-50 hover:bg-amber-500/10"
+                    : "text-white/70 hover:text-white hover:bg-white/5"
+                }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
@@ -158,8 +178,12 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
                         location.pathname === to
-                          ? "bg-accent/15 text-accent"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                          ? group.tone === "developer"
+                            ? "bg-amber-500/15 text-amber-300"
+                            : "bg-accent/15 text-accent"
+                          : group.tone === "developer"
+                            ? "text-amber-100/75 hover:text-amber-50 hover:bg-amber-500/10"
+                            : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       <Icon className="w-4 h-4" />

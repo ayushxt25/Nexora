@@ -149,6 +149,9 @@ export const api = {
     list: (params) => request(`/recommendations${buildQuery(params)}`, { method: "GET" }),
     nextBestActions: (limit) =>
       request(`/recommendations/next-best-actions${buildQuery({ limit })}`, { method: "GET" }),
+    trainingData: () => request("/recommendations/training-data", { method: "GET" }),
+    trainRanker: () => request("/recommendations/train-ranker", { method: "POST" }),
+    rankerStatus: () => request("/recommendations/ranker-status", { method: "GET" }),
   },
 
   opportunities: {
@@ -166,6 +169,14 @@ export const api = {
   metrics: {
     get: () => request("/metrics", { method: "GET" }),
     summary: () => request("/metrics/summary", { method: "GET" }),
+  },
+
+  audit: {
+    logs: (params) => request(`/audit/logs${buildQuery(params)}`, { method: "GET" }),
+  },
+
+  retrieval: {
+    debug: (params) => request(`/retrieval/debug${buildQuery(params)}`, { method: "GET" }),
   },
 
   personalization: {
