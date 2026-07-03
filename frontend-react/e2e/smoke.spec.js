@@ -128,7 +128,7 @@ async function finishOnboardingIfPresent(page, firstTimeExpected) {
 
 test("login/register page loads and auth mode badge is visible", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "NetworkingAssistant" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nexora" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Log In" }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Register" }).first()).toBeVisible();
   await expect(page.locator("text=Supabase Auth").or(page.locator("text=Legacy Auth")).first()).toBeVisible();

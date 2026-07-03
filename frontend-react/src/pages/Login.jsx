@@ -87,9 +87,9 @@ export default function Login() {
             <Users2 className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">
-            Networking<span className="gradient-text">Assistant</span>
+            <span className="gradient-text">Nexora</span>
           </h1>
-          <p className="text-white/50 text-sm mt-1">Your AI-powered networking companion</p>
+          <p className="text-white/50 text-sm mt-1">Your relationship intelligence platform</p>
           <p className="text-white/35 text-xs mt-2 uppercase tracking-[0.2em]">{providerTitle}</p>
         </div>
 
