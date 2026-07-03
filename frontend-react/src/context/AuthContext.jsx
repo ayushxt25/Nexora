@@ -36,6 +36,18 @@ function deriveRoleFromSupabaseUser(authUser) {
   return null;
 }
 
+async function resolveBackendIdentity() {
+  try {
+    const currentUser = await api.auth.me();
+    return {
+      username: currentUser?.username || null,
+      role: currentUser?.role || null,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const provider = getAuthProvider();
   const [user, setUser] = useState(null);
@@ -78,8 +90,10 @@ export function AuthProvider({ children }) {
         if (error) throw error;
 
         const authUser = data.user || data.session?.user || null;
-        const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
-        const nextRole = deriveRoleFromSupabaseUser(authUser);
+        const backendIdentity = await resolveBackendIdentity();
+        const nextUsername =
+          backendIdentity?.username || deriveDisplayNameFromSupabaseUser(authUser);
+        const nextRole = backendIdentity?.role || deriveRoleFromSupabaseUser(authUser);
         setUser(authUser);
         setToken(data.session?.access_token || null);
         persistSessionIdentity(nextUsername, nextRole);
@@ -167,8 +181,10 @@ export function AuthProvider({ children }) {
       if (!active) return;
 
       const authUser = session?.user || null;
-      const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
-      const nextRole = deriveRoleFromSupabaseUser(authUser);
+      const backendIdentity = session ? await resolveBackendIdentity() : null;
+      const nextUsername =
+        backendIdentity?.username || deriveDisplayNameFromSupabaseUser(authUser);
+      const nextRole = backendIdentity?.role || deriveRoleFromSupabaseUser(authUser);
       setUser(authUser);
       setToken(session?.access_token || null);
       persistSessionIdentity(nextUsername, nextRole);
@@ -182,13 +198,18 @@ export function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
 
-      const authUser = session?.user || null;
-      const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
-      const nextRole = deriveRoleFromSupabaseUser(authUser);
-      setUser(authUser);
-      setToken(session?.access_token || null);
-      persistSessionIdentity(nextUsername, nextRole);
-      setLoading(false);
+      void (async () => {
+        const authUser = session?.user || null;
+        const backendIdentity = session ? await resolveBackendIdentity() : null;
+        const nextUsername =
+          backendIdentity?.username || deriveDisplayNameFromSupabaseUser(authUser);
+        const nextRole = backendIdentity?.role || deriveRoleFromSupabaseUser(authUser);
+        if (!active) return;
+        setUser(authUser);
+        setToken(session?.access_token || null);
+        persistSessionIdentity(nextUsername, nextRole);
+        setLoading(false);
+      })();
     });
 
     return () => {

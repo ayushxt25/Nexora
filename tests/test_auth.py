@@ -259,3 +259,65 @@ def test_supabase_user_resolution_assigns_admin_from_configured_email(db_session
 
     assert user.supabase_user_id == "supabase-admin-1"
     assert user.role == "admin"
+
+
+def test_supabase_existing_local_user_is_upgraded_to_admin_from_configured_email(db_session, monkeypatch):
+    existing = User(
+        username="supabase-existing",
+        hashed_password="not-used",
+        supabase_user_id="supabase-admin-2",
+        role="user",
+    )
+    db_session.add(existing)
+    db_session.commit()
+
+    monkeypatch.setenv("ADMIN_EMAILS", "boss@example.com")
+    monkeypatch.setattr("app.dependencies.get_supabase_auth_enabled", lambda: True)
+    monkeypatch.setattr("app.dependencies.get_supabase_dual_auth_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.dependencies.verify_supabase_jwt",
+        lambda token: SupabaseJWTClaims(
+            supabase_user_id="supabase-admin-2",
+            email="boss@example.com",
+            role="user",
+            raw_claims={"sub": "supabase-admin-2"},
+        ),
+    )
+
+    user = get_current_user(token="supabase-token", db=db_session)
+
+    assert user.id == existing.id
+    assert user.role == "admin"
+
+
+def test_admin_email_matching_is_case_insensitive_and_whitespace_safe(db_session, monkeypatch):
+    monkeypatch.setenv("ADMIN_EMAILS", "  Boss@Example.com , team@example.com  ")
+    monkeypatch.setattr("app.dependencies.get_supabase_auth_enabled", lambda: True)
+    monkeypatch.setattr("app.dependencies.get_supabase_dual_auth_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.dependencies.verify_supabase_jwt",
+        lambda token: SupabaseJWTClaims(
+            supabase_user_id="supabase-admin-3",
+            email="  boss@example.com ",
+            role="user",
+            raw_claims={"sub": "supabase-admin-3"},
+        ),
+    )
+
+    user = get_current_user(token="supabase-token", db=db_session)
+
+    assert user.role == "admin"
+
+
+def test_auth_me_returns_role_for_authenticated_legacy_user(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "roleviewer")
+    client.post("/auth/register", json={"username": "roleviewer", "password": "supersecret123"})
+    token = client.post(
+        "/auth/login", json={"username": "roleviewer", "password": "supersecret123"}
+    ).json()["access_token"]
+
+    response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.json()["username"] == "roleviewer"
+    assert response.json()["role"] == "admin"

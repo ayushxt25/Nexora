@@ -136,6 +136,10 @@ export const api = {
   login: (username, password) =>
     request("/auth/login", { method: "POST", body: { username, password }, auth: false }),
 
+  auth: {
+    me: () => request("/auth/me", { method: "GET" }),
+  },
+
   generateConversation: (description, interests) =>
     request("/generate-conversation", {
       method: "POST",
