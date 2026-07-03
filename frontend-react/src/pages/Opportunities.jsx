@@ -6,6 +6,7 @@ import {
   ArrowUpDown,
   CalendarClock,
   CheckCircle2,
+  MessageSquareHeart,
   MessageSquareX,
   Plus,
   Search,
@@ -96,6 +97,13 @@ function inferredStatus(item, followUpMap) {
   return followUp?.status || "Linked follow-up unavailable";
 }
 
+const opportunityFeedbackOptions = [
+  { key: "helpful", label: "Helpful" },
+  { key: "not_helpful", label: "Not helpful" },
+  { key: "irrelevant", label: "Irrelevant" },
+  { key: "too_generic", label: "Too generic" },
+];
+
 function OpportunityCard({
   item,
   contactName,
@@ -108,9 +116,14 @@ function OpportunityCard({
   onComplete,
   onConvert,
   onGenerate,
+  onFeedback,
   accepting,
   dismissing,
   completing,
+  feedbackSubmitting,
+  feedbackValue,
+  feedbackMessage,
+  feedbackError,
 }) {
   return (
     <motion.div
@@ -156,6 +169,37 @@ function OpportunityCard({
             <span>{Math.round(item.confidence * 100)}% confidence</span>
           </div>
         </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <MessageSquareHeart className="h-4 w-4 text-accent" />
+          <p className="text-sm font-medium text-white">Rate this opportunity</p>
+          <span className="text-xs text-white/35">Separate from accept, dismiss, and complete</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {opportunityFeedbackOptions.map((option) => {
+            const active = feedbackValue === option.key;
+            return (
+              <button
+                key={option.key}
+                onClick={() => onFeedback(item, option.key)}
+                disabled={feedbackSubmitting || active}
+                className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                  active
+                    ? "border-accent/30 bg-accent/15 text-accent"
+                    : feedbackSubmitting
+                      ? "border-white/10 bg-white/5 text-white/35"
+                      : "border-white/10 bg-white/5 text-white/55 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        {feedbackMessage ? <p className="mt-3 text-xs text-emerald-300">{feedbackMessage}</p> : null}
+        {feedbackError ? <p className="mt-3 text-xs text-red-300">{feedbackError}</p> : null}
       </div>
 
       <div className="action-cluster mt-5">
@@ -246,6 +290,10 @@ export default function Opportunities() {
   const [acceptingId, setAcceptingId] = useState(null);
   const [dismissingId, setDismissingId] = useState(null);
   const [completingId, setCompletingId] = useState(null);
+  const [feedbackSubmittingId, setFeedbackSubmittingId] = useState(null);
+  const [feedbackByOpportunityId, setFeedbackByOpportunityId] = useState({});
+  const [feedbackMessageByOpportunityId, setFeedbackMessageByOpportunityId] = useState({});
+  const [feedbackErrorByOpportunityId, setFeedbackErrorByOpportunityId] = useState({});
   const [followUpTarget, setFollowUpTarget] = useState(null);
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
@@ -485,6 +533,45 @@ export default function Opportunities() {
     }
   }
 
+  async function handleFeedback(item, category) {
+    if (!item?.opportunity_id) return;
+    setFeedbackSubmittingId(item.opportunity_id);
+    setFeedbackErrorByOpportunityId((current) => ({
+      ...current,
+      [item.opportunity_id]: "",
+    }));
+    try {
+      await api.submitFeedback({
+        suggestion: item.title,
+        category,
+        target_type: "opportunity",
+        target_id: item.opportunity_id,
+        notes: item.reason,
+      });
+      setFeedbackByOpportunityId((current) => ({
+        ...current,
+        [item.opportunity_id]: category,
+      }));
+      setFeedbackMessageByOpportunityId((current) => ({
+        ...current,
+        [item.opportunity_id]: "Feedback saved",
+      }));
+      window.setTimeout(() => {
+        setFeedbackMessageByOpportunityId((current) => ({
+          ...current,
+          [item.opportunity_id]: "",
+        }));
+      }, 1600);
+    } catch (err) {
+      setFeedbackErrorByOpportunityId((current) => ({
+        ...current,
+        [item.opportunity_id]: err.message || "Could not save feedback right now.",
+      }));
+    } finally {
+      setFeedbackSubmittingId(null);
+    }
+  }
+
   const categoryOptions = [
     { value: "", label: "All categories" },
     { value: "Warm introductions", label: "Warm introductions" },
@@ -681,9 +768,14 @@ export default function Opportunities() {
                       onComplete={handleComplete}
                       onConvert={setFollowUpTarget}
                       onGenerate={handleGenerate}
+                      onFeedback={handleFeedback}
                       accepting={acceptingId === item.opportunity_id}
                       dismissing={dismissingId === item.opportunity_id}
                       completing={completingId === item.opportunity_id}
+                      feedbackSubmitting={feedbackSubmittingId === item.opportunity_id}
+                      feedbackValue={feedbackByOpportunityId[item.opportunity_id] || ""}
+                      feedbackMessage={feedbackMessageByOpportunityId[item.opportunity_id] || ""}
+                      feedbackError={feedbackErrorByOpportunityId[item.opportunity_id] || ""}
                     />
                   ))}
                 </div>

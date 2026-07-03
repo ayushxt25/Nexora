@@ -166,3 +166,36 @@ def test_opportunity_lifecycle_endpoint_and_response_fields(client, auth_headers
     )
     assert updated["lifecycle_status"] == "dismissed"
     assert updated["lifecycle_updated_at"] is not None
+
+
+def test_opportunity_feedback_is_accepted_and_stored(client, auth_headers):
+    contact = client.post(
+        "/contacts",
+        json={"name": "Feedback Opp", "company": "Quiet", "role": "Advisor", "relationship_strength": 2},
+        headers=auth_headers,
+    ).json()
+
+    opportunity = next(
+        item
+        for item in client.get("/opportunities", headers=auth_headers).json()
+        if item["opportunity_type"] == "reconnect_with_cold_contact"
+        and item["related_contact_id"] == contact["id"]
+    )
+
+    response = client.post(
+        "/feedback",
+        json={
+            "suggestion": opportunity["title"],
+            "category": "irrelevant",
+            "target_type": "opportunity",
+            "target_id": opportunity["opportunity_id"],
+            "notes": opportunity["reason"],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    history = client.get("/feedback-history", headers=auth_headers).json()
+    assert history[0]["target_type"] == "opportunity"
+    assert history[0]["target_id"] == opportunity["opportunity_id"]
+    assert history[0]["category"] == "irrelevant"

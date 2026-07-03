@@ -70,6 +70,38 @@ def test_log_feedback_supports_structured_category_and_target(db_session):
     assert entry.notes == "Useful and specific"
 
 
+def test_log_feedback_supports_opportunity_target_type(db_session):
+    user = _create_test_user(db_session)
+
+    entry = log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="Prioritize this intro",
+        category="helpful",
+        target_type="opportunity",
+        target_id="opp-1",
+        notes="Strong timing",
+    )
+
+    assert entry.action == "like"
+    assert entry.category == "helpful"
+    assert entry.target_type == "opportunity"
+    assert entry.target_id == "opp-1"
+
+
+def test_log_feedback_rejects_invalid_target_type(db_session):
+    user = _create_test_user(db_session)
+
+    with pytest.raises(ValueError):
+        log_feedback(
+            db_session,
+            user_id=user.id,
+            suggestion="Unsupported target",
+            category="helpful",
+            target_type="fact_check",
+        )
+
+
 def test_summarize_feedback_returns_generation_and_recommendation_signals(db_session):
     user = _create_test_user(db_session)
     log_feedback(

@@ -117,8 +117,8 @@ export default function FeedbackHistory() {
           <h1 className="text-2xl font-semibold text-white">Feedback History</h1>
         </div>
         <p className="mt-2 text-sm text-white/50">
-          Review the feedback you've personally submitted so far. This now includes ratings from generated suggestions
-          and recommendation cards, along with the preference signals that come from those actions.
+          Review the feedback you've personally submitted so far. This now includes ratings from generated suggestions,
+          recommendation cards, and opportunity cards, along with the preference signals that come from those actions.
         </p>
       </section>
 
@@ -221,7 +221,7 @@ export default function FeedbackHistory() {
             description={
               entries.length
                 ? "Try clearing the current filters."
-                : "Rate a few generated suggestions or recommendation cards and your personal feedback signals will start to appear here."
+                : "Rate a few generated suggestions, recommendation cards, or opportunity cards and your personal feedback signals will start to appear here."
             }
             actionLabel={entries.length ? "Clear filters" : "Open Generate"}
             onAction={
