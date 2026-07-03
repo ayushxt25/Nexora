@@ -195,3 +195,23 @@ def test_verify_supabase_jwt_can_fall_back_to_jwks(monkeypatch):
     assert claims.supabase_user_id == "jwks-user"
     assert claims.email == "jwks@example.com"
     assert claims.role == "user"
+
+
+def test_supabase_jwks_cache_reuses_fetched_keys(monkeypatch):
+    fetched = []
+
+    monkeypatch.setattr("app.supabase_auth._JWKS_CACHE", {})
+    monkeypatch.setattr("app.supabase_auth._JWKS_CACHE_EXPIRY", {})
+    monkeypatch.setattr("app.supabase_auth._JWKS_CACHE_TTL_SECONDS", 300)
+    monkeypatch.setattr(
+        "app.supabase_auth._fetch_jwks",
+        lambda url: fetched.append(url) or [{"kid": "key-1", "kty": "RSA"}],
+    )
+
+    from app.supabase_auth import _get_jwks
+
+    first = _get_jwks("https://demo.supabase.co/auth/v1/.well-known/jwks.json")
+    second = _get_jwks("https://demo.supabase.co/auth/v1/.well-known/jwks.json")
+
+    assert first == second
+    assert fetched == ["https://demo.supabase.co/auth/v1/.well-known/jwks.json"]

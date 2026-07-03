@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 import logging
+from threading import Lock
 from time import time
 from typing import Any
 from urllib.request import urlopen
@@ -13,6 +14,10 @@ from app.roles import coerce_user_role
 
 logger = logging.getLogger("networking_assistant")
 _JWKS_CACHE: dict[str, list[dict[str, Any]]] = {}
+_JWKS_CACHE_LOCK = Lock()
+_JWKS_CACHE_TTL_SECONDS = 300
+_JWKS_FETCH_TIMEOUT_SECONDS = 2
+_JWKS_CACHE_EXPIRY: dict[str, float] = {}
 
 
 @dataclass
@@ -63,7 +68,7 @@ def _decode_with_shared_secret(token: str, secret: str) -> dict[str, Any] | None
 
 
 def _fetch_jwks(jwks_url: str) -> list[dict[str, Any]]:
-    with urlopen(jwks_url, timeout=3) as response:
+    with urlopen(jwks_url, timeout=_JWKS_FETCH_TIMEOUT_SECONDS) as response:
         payload = json.loads(response.read().decode("utf-8"))
     keys = payload.get("keys")
     if not isinstance(keys, list):
@@ -72,9 +77,19 @@ def _fetch_jwks(jwks_url: str) -> list[dict[str, Any]]:
 
 
 def _get_jwks(jwks_url: str, *, refresh: bool = False) -> list[dict[str, Any]]:
-    if refresh or jwks_url not in _JWKS_CACHE:
-        _JWKS_CACHE[jwks_url] = _fetch_jwks(jwks_url)
-    return _JWKS_CACHE[jwks_url]
+    now = time()
+    with _JWKS_CACHE_LOCK:
+        cached_keys = _JWKS_CACHE.get(jwks_url)
+        expires_at = _JWKS_CACHE_EXPIRY.get(jwks_url, 0)
+        if not refresh and cached_keys is not None and expires_at > now:
+            logger.info("Supabase JWKS cache hit")
+            return cached_keys
+
+        logger.info("Supabase JWKS cache miss")
+        keys = _fetch_jwks(jwks_url)
+        _JWKS_CACHE[jwks_url] = keys
+        _JWKS_CACHE_EXPIRY[jwks_url] = now + _JWKS_CACHE_TTL_SECONDS
+        return keys
 
 
 def _get_matching_jwk(keys: list[dict[str, Any]], kid: str | None, algorithm: str | None) -> dict[str, Any] | None:
