@@ -32,3 +32,33 @@ def test_handles_empty_themes_and_interests_gracefully():
     # Should not raise, even with no themes/interests supplied.
     result = generate_topics([], [])
     assert isinstance(result, list)
+
+
+def test_generate_topics_uses_max_new_tokens(monkeypatch):
+    captured = {}
+
+    def fake_generator(prompt, **kwargs):
+        captured["kwargs"] = kwargs
+        return [{"generated_text": f"{prompt}\n1. Ask about their current priorities"}]
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+
+    result = generate_topics(["AI"], ["robotics"])
+
+    assert result
+    assert "max_new_tokens" in captured["kwargs"]
+    assert captured["kwargs"]["max_new_tokens"] == 80
+    assert "max_length" not in captured["kwargs"]
+
+
+def test_generate_topics_falls_back_on_exact_max_length_value_error(monkeypatch):
+    def fake_generator(prompt, **kwargs):
+        raise ValueError("Input length of input_ids is 80, but `max_length` is set to 80.")
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+
+    result = generate_topics(["AI"], ["robotics"])
+
+    assert isinstance(result, list)
+    assert len(result) == 3
+    assert all(isinstance(item, str) and item.strip() for item in result)

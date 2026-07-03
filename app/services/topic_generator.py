@@ -130,13 +130,17 @@ def generate_topics(
     if generator is None:
         return _generate_topics_fallback(themes, interests, relationship_context)
 
-    output = generator(
-        prompt,
-        max_length=80,
-        num_return_sequences=1,
-        truncation=True,
-        pad_token_id=50256,  # GPT-2's eos_token_id, silences a padding warning
-    )
+    try:
+        output = generator(
+            prompt,
+            max_new_tokens=80,
+            num_return_sequences=1,
+            truncation=True,
+            pad_token_id=50256,  # GPT-2's eos_token_id, silences a padding warning
+        )
+    except Exception as exc:
+        logger.warning("Topic generation failed; using fallback suggestions: %s", exc)
+        return _generate_topics_fallback(themes, interests, relationship_context)
 
     generated_text = output[0]["generated_text"]
 
@@ -147,4 +151,8 @@ def generate_topics(
     suggestions = [_clean_line(line) for line in lines]
     suggestions = [s for s in suggestions if s]  # drop empties from cleanup
 
-    return suggestions[:3]
+    final_suggestions = suggestions[:3]
+    if final_suggestions:
+        return final_suggestions
+
+    return _generate_topics_fallback(themes, interests, relationship_context)

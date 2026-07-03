@@ -99,11 +99,26 @@ def generate_conversation(
         interests=body.interests,
         themes=themes,
     )
-    suggestions = generate_topics(
-        themes,
-        body.interests,
-        relationship_context=generation_context.combined_summary,
-    )
+    try:
+        suggestions = generate_topics(
+            themes,
+            body.interests,
+            relationship_context=generation_context.combined_summary,
+        )
+    except Exception as exc:
+        log_audit_event(
+            event_type="generation_request",
+            status="failed",
+            user_id=current_user.id,
+            entity_type="conversation",
+            message="Conversation generation failed",
+            metadata={"error": str(exc)},
+            db=db,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Conversation generation is temporarily unavailable",
+        ) from exc
 
     # Automatic side-effect logging: every successful generation is saved
     # to this user's history without the frontend needing a separate call.

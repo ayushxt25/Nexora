@@ -88,6 +88,31 @@ def test_generate_conversation_appears_in_history(client, auth_headers):
     assert history[0]["interests"] == ["climate change"]
 
 
+def test_generate_conversation_long_input_does_not_crash_on_topic_generator_value_error(
+    client, auth_headers, monkeypatch
+):
+    from app.routes import conversation as conversation_routes
+
+    def fake_generate_topics(themes, interests, relationship_context=None):
+        raise ValueError("Input length of input_ids is 80, but `max_length` is set to 80.")
+
+    monkeypatch.setattr(conversation_routes, "generate_topics", fake_generate_topics)
+
+    response = client.post(
+        "/generate-conversation",
+        json={
+            "description": " ".join(["long-event-context"] * 200),
+            "interests": ["ai", "networking"],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"]["code"] == "http_error"
+    assert body["error"]["message"] == "Conversation generation is temporarily unavailable"
+
+
 def test_feedback_endpoint_accepts_valid_action(client, auth_headers):
     response = client.post(
         "/feedback",
