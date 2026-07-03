@@ -48,6 +48,7 @@ const navGroups = [
 const developerConsoleItems = [
   { to: "/developer/metrics", label: "Metrics", icon: Activity },
   { to: "/developer/audit-logs", label: "Audit Logs", icon: ScrollText },
+  { to: "/developer/feedback-console", label: "Feedback Ops", icon: MessageSquareHeart },
   { to: "/developer/retrieval-debug", label: "Retrieval Debug", icon: Radar },
   { to: "/developer/ranker-tools", label: "Ranker Tools", icon: BrainCircuit },
 ];

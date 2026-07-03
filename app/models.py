@@ -310,6 +310,28 @@ class FeedbackSummaryResponse(BaseModel):
     user_preferences: FeedbackPreferenceSignalsResponse
 
 
+class AdminFeedbackItemResponse(BaseModel):
+    user_id: int
+    suggestion: str
+    action: str
+    category: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+
+class AdminFeedbackSummaryResponse(BaseModel):
+    total_feedback_count: int
+    counts_by_target_type: dict[str, int]
+    counts_by_category: dict[str, int]
+    helpful_signal_count: int
+    negative_signal_count: int
+    app_experience_feedback_count: int
+    app_feedback_signal_counts: dict[str, int]
+    recent_feedback_items: List[AdminFeedbackItemResponse]
+
+
 class RecommendationTrainingDataResponse(BaseModel):
     recommendation_id: str
     recommendation_type: str

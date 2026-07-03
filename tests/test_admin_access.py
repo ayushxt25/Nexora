@@ -4,6 +4,8 @@ import pytest
 ADMIN_ENDPOINTS = [
     ("GET", "/metrics"),
     ("GET", "/metrics/summary"),
+    ("GET", "/admin/feedback/summary"),
+    ("GET", "/admin/feedback"),
     ("GET", "/audit/logs"),
     ("GET", "/retrieval/debug?q=test"),
     ("GET", "/recommendations/training-data"),

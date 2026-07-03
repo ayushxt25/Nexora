@@ -162,6 +162,8 @@ export const api = {
 
   feedback: {
     summary: () => request("/feedback/summary", { method: "GET" }),
+    adminSummary: (params) => request(`/admin/feedback/summary${buildQuery(params)}`, { method: "GET" }),
+    adminList: (params) => request(`/admin/feedback${buildQuery(params)}`, { method: "GET" }),
   },
 
   analyzeEvent: (description, candidateLabels) =>

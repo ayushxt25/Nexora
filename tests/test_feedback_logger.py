@@ -5,7 +5,13 @@ Tests for app.services.feedback_logger (database-backed).
 import pytest
 
 from app.db_models import User
-from app.services.feedback_logger import load_feedback, log_feedback, summarize_feedback
+from app.services.feedback_logger import (
+    load_feedback,
+    load_feedback_admin,
+    log_feedback,
+    summarize_feedback,
+    summarize_feedback_admin,
+)
 
 
 def _create_test_user(db_session) -> User:
@@ -163,3 +169,57 @@ def test_summarize_feedback_returns_generation_and_recommendation_signals(db_ses
     assert summary.recommendation_quality.total == 1
     assert summary.recommendation_quality.category_counts["accepted"] == 1
     assert summary.user_preferences.specificity_adjustment_signals == 1
+
+
+def test_admin_feedback_summary_aggregates_app_feedback_signals(db_session):
+    user = _create_test_user(db_session)
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="App feedback: Feature request",
+        category="helpful",
+        target_type="app_experience",
+        target_id="/help",
+        notes="Feature request: add saved filters",
+    )
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="App feedback: Bug",
+        category="not_helpful",
+        target_type="app_experience",
+        target_id="/settings",
+        notes="Bug: theme switch flickers",
+    )
+
+    summary = summarize_feedback_admin(db_session, recent_limit=5)
+    assert summary.total_feedback_count == 2
+    assert summary.counts_by_target_type["app_experience"] == 2
+    assert summary.helpful_signal_count == 1
+    assert summary.negative_signal_count == 1
+    assert summary.app_feedback_signal_counts["bug"] == 1
+    assert summary.app_feedback_signal_counts["feature_request"] == 1
+
+
+def test_load_feedback_admin_filters_by_target_and_category(db_session):
+    user = _create_test_user(db_session)
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="App feedback: Praise",
+        category="helpful",
+        target_type="app_experience",
+        target_id="global",
+    )
+    log_feedback(
+        db_session,
+        user_id=user.id,
+        suggestion="Reconnect with Mina",
+        category="accepted",
+        target_type="recommendation",
+        target_id="rec-1",
+    )
+
+    filtered = load_feedback_admin(db_session, limit=10, target_type="app_experience", category="helpful")
+    assert len(filtered) == 1
+    assert filtered[0].target_type == "app_experience"

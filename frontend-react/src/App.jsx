@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -27,6 +28,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const NetworkGraph = lazy(() => import("./pages/NetworkGraph"));
 const MetricsConsole = lazy(() => import("./pages/MetricsConsole"));
 const AuditLogsConsole = lazy(() => import("./pages/AuditLogsConsole"));
+const FeedbackConsole = lazy(() => import("./pages/FeedbackConsole"));
 const RetrievalDebugConsole = lazy(() => import("./pages/RetrievalDebugConsole"));
 const RankerToolsConsole = lazy(() => import("./pages/RankerToolsConsole"));
 
@@ -77,10 +79,11 @@ function AppRoutes() {
         <Route path="/relationship-scores" element={withSuspense(<RelationshipScores />)} />
         <Route path="/analytics" element={withSuspense(<Analytics />)} />
         <Route path="/network-graph" element={withSuspense(<NetworkGraph />)} />
-        <Route path="/developer/metrics" element={withSuspense(<MetricsConsole />)} />
-        <Route path="/developer/audit-logs" element={withSuspense(<AuditLogsConsole />)} />
-        <Route path="/developer/retrieval-debug" element={withSuspense(<RetrievalDebugConsole />)} />
-        <Route path="/developer/ranker-tools" element={withSuspense(<RankerToolsConsole />)} />
+        <Route path="/developer/metrics" element={<AdminRoute>{withSuspense(<MetricsConsole />)}</AdminRoute>} />
+        <Route path="/developer/audit-logs" element={<AdminRoute>{withSuspense(<AuditLogsConsole />)}</AdminRoute>} />
+        <Route path="/developer/feedback-console" element={<AdminRoute>{withSuspense(<FeedbackConsole />)}</AdminRoute>} />
+        <Route path="/developer/retrieval-debug" element={<AdminRoute>{withSuspense(<RetrievalDebugConsole />)}</AdminRoute>} />
+        <Route path="/developer/ranker-tools" element={<AdminRoute>{withSuspense(<RankerToolsConsole />)}</AdminRoute>} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

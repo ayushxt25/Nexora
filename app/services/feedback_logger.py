@@ -48,6 +48,30 @@ class FeedbackSummary:
     user_preferences: FeedbackPreferenceSignals
 
 
+@dataclass
+class AdminFeedbackItem:
+    user_id: int
+    suggestion: str
+    action: str
+    category: Optional[str]
+    target_type: Optional[str]
+    target_id: Optional[str]
+    notes: Optional[str]
+    created_at: object
+
+
+@dataclass
+class AdminFeedbackSummary:
+    total_feedback_count: int
+    counts_by_target_type: dict[str, int]
+    counts_by_category: dict[str, int]
+    helpful_signal_count: int
+    negative_signal_count: int
+    app_experience_feedback_count: int
+    app_feedback_signal_counts: dict[str, int]
+    recent_feedback_items: List[AdminFeedbackItem]
+
+
 def _normalize_action(action: Optional[str], category: Optional[str]) -> str:
     if action is not None:
         if action not in VALID_ACTIONS:
@@ -77,6 +101,34 @@ def _validate_target_type(target_type: Optional[str]) -> Optional[str]:
     if target_type not in VALID_TARGET_TYPES:
         raise ValueError(f"target_type must be one of {VALID_TARGET_TYPES}, got '{target_type}'")
     return target_type
+
+
+def _feedback_to_admin_item(entry: Feedback) -> AdminFeedbackItem:
+    return AdminFeedbackItem(
+        user_id=entry.user_id,
+        suggestion=entry.suggestion,
+        action=entry.action,
+        category=entry.category,
+        target_type=entry.target_type,
+        target_id=entry.target_id,
+        notes=entry.notes,
+        created_at=entry.created_at,
+    )
+
+
+def _extract_app_feedback_signal(entry: Feedback) -> Optional[str]:
+    text = f"{entry.suggestion or ''} {entry.notes or ''}".lower()
+    if "feature request" in text or "feature_request" in text:
+        return "feature_request"
+    if "general feedback" in text or "general_feedback" in text:
+        return "general_feedback"
+    if "confusing" in text:
+        return "confusing"
+    if "praise" in text:
+        return "praise"
+    if "bug" in text:
+        return "bug"
+    return None
 
 
 def log_feedback(
@@ -118,6 +170,28 @@ def load_feedback(db: Session, user_id: int, limit: int = 10) -> List[Feedback]:
     )
 
 
+def load_feedback_admin(
+    db: Session,
+    limit: int = 50,
+    target_type: Optional[str] = None,
+    category: Optional[str] = None,
+) -> List[Feedback]:
+    normalized_target_type = _validate_target_type(target_type)
+    normalized_category = _validate_category(category)
+
+    query = db.query(Feedback)
+    if normalized_target_type:
+        query = query.filter(Feedback.target_type == normalized_target_type)
+    if normalized_category:
+        query = query.filter(Feedback.category == normalized_category)
+
+    return (
+        query.order_by(Feedback.created_at.desc(), Feedback.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 def summarize_feedback(db: Session, user_id: int) -> FeedbackSummary:
     entries = db.query(Feedback).filter(Feedback.user_id == user_id).all()
 
@@ -146,4 +220,30 @@ def summarize_feedback(db: Session, user_id: int) -> FeedbackSummary:
             tone_adjustment_signals=sum(1 for entry in entries if entry.category == "wrong_tone"),
             specificity_adjustment_signals=sum(1 for entry in entries if entry.category == "too_generic"),
         ),
+    )
+
+
+def summarize_feedback_admin(db: Session, recent_limit: int = 10) -> AdminFeedbackSummary:
+    entries = db.query(Feedback).order_by(Feedback.created_at.desc(), Feedback.id.desc()).all()
+    recent_entries = entries[:recent_limit]
+
+    counts_by_target_type = Counter(entry.target_type or "untyped" for entry in entries)
+    counts_by_category = Counter(entry.category or entry.action for entry in entries)
+    helpful_signal_count = sum(1 for entry in entries if entry.action == "like")
+    negative_signal_count = sum(1 for entry in entries if entry.action == "dislike")
+    app_feedback_signal_counts = Counter(
+        signal
+        for signal in (_extract_app_feedback_signal(entry) for entry in entries if entry.target_type == "app_experience")
+        if signal
+    )
+
+    return AdminFeedbackSummary(
+        total_feedback_count=len(entries),
+        counts_by_target_type=dict(sorted(counts_by_target_type.items())),
+        counts_by_category=dict(sorted(counts_by_category.items())),
+        helpful_signal_count=helpful_signal_count,
+        negative_signal_count=negative_signal_count,
+        app_experience_feedback_count=sum(1 for entry in entries if entry.target_type == "app_experience"),
+        app_feedback_signal_counts=dict(sorted(app_feedback_signal_counts.items())),
+        recent_feedback_items=[_feedback_to_admin_item(entry) for entry in recent_entries],
     )

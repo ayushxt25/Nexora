@@ -35,6 +35,7 @@ from app.routes.action_lifecycle import router as action_lifecycle_router
 from app.routes.audit import router as audit_router
 from app.routes.auth import router as auth_router
 from app.routes.conversation import router as conversation_router
+from app.routes.feedback_admin import router as feedback_admin_router
 from app.routes.metrics import router as metrics_router
 from app.routes.network import router as network_router
 from app.routes.opportunities import router as opportunities_router
@@ -206,6 +207,7 @@ app.include_router(recommendations_router)
 app.include_router(action_lifecycle_router)
 app.include_router(retrieval_router)
 app.include_router(metrics_router)
+app.include_router(feedback_admin_router)
 app.include_router(analytics_router)
 app.include_router(audit_router)
 app.include_router(network_router)
