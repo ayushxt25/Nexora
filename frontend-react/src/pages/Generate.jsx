@@ -107,7 +107,7 @@ function buildContextCards(prefill, parsedInterests) {
     cards.push({
       key: "interests",
       title: "Interest context",
-      lines: ["The generator will use these interests as direct prompt context."],
+      lines: ["These interests help shape the direction and tone of your conversation starters."],
       chips: parsedInterests,
     });
   }
@@ -307,8 +307,7 @@ export default function Generate() {
           <div>
             <h2 className="text-base font-semibold text-white">Context preview</h2>
             <p className="mt-1 text-sm text-white/45">
-              This is the real context visible to the frontend before the backend adds stored relationship data and
-              semantic memory.
+              Nexora combines your prompt with any saved relationship context already available for this prep.
             </p>
           </div>
 
@@ -368,7 +367,7 @@ export default function Generate() {
             <EmptyState
               icon={Users2}
               title="No linked prep context yet"
-              description="Open this page from a contact, event, recommendation, or opportunity to carry richer relationship context into generation."
+              description="Open Generate from a contact, event, recommendation, or opportunity to start with richer context."
             />
           )}
         </section>
@@ -394,7 +393,7 @@ export default function Generate() {
         <EmptyState
           icon={Sparkles}
           title="No prep output yet"
-          description="Generate conversation starters to see detected themes, reusable openers, and feedback actions."
+          description="Generate starters to see themes, conversation angles, and personal feedback signals."
         />
       ) : null}
 
@@ -439,9 +438,8 @@ export default function Generate() {
 
             <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
               <p className="text-sm text-white/60">
-                Use feedback actions below to improve future recommendation and preparation ranking. The backend does
-                not currently expose a separate "save draft" endpoint because successful generations already persist to
-                history.
+                Rate the suggestions that feel strongest. Nexora uses those signals to sharpen future preparation and
+                recommendation quality while saving successful generations to your history.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button variant="secondary" icon={History} onClick={() => navigate("/history")}>

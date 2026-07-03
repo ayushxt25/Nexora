@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Calendar, MessageSquareHeart, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 import { api } from "../api/client";
 import CustomSelect from "../components/ui/CustomSelect";
@@ -28,6 +29,7 @@ function getFeedbackTone(entry) {
 }
 
 export default function FeedbackHistory() {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,8 +117,8 @@ export default function FeedbackHistory() {
           <h1 className="text-2xl font-semibold text-white">Feedback History</h1>
         </div>
         <p className="mt-2 text-sm text-white/50">
-          Review how you have rated generated suggestions and recommendations, and inspect the real preference signals
-          the backend currently exposes.
+          Review the feedback you've personally submitted so far. Today, this mostly reflects how you rate generated
+          conversation suggestions and the preference signals that come from those ratings.
         </p>
       </section>
 
@@ -138,7 +140,7 @@ export default function FeedbackHistory() {
           <p className="mt-2 text-sm text-white/70">
             {summary?.user_preferences?.preferred_feedback_categories?.length
               ? summary.user_preferences.preferred_feedback_categories.join(", ")
-              : "No dominant preference signals yet"}
+              : "Your strongest feedback patterns will appear here as you rate more suggestions"}
           </p>
         </div>
       </div>
@@ -199,13 +201,12 @@ export default function FeedbackHistory() {
               <div className="mt-2 space-y-1 text-sm text-white/70">
                 <p>{interactionFeedback.length} interaction-linked feedback item(s)</p>
                 <p className="text-xs text-white/50">
-                  Derived from real feedback-history target types. No separate backend interaction summary endpoint
-                  exists today.
+                  Interaction-linked feedback appears here when feedback is attached directly to an interaction.
                 </p>
               </div>
             ) : (
               <p className="mt-2 text-sm text-white/50">
-                No interaction-targeted feedback has been recorded yet.
+                No interaction-linked feedback yet.
               </p>
             )}
           </div>
@@ -220,13 +221,17 @@ export default function FeedbackHistory() {
             description={
               entries.length
                 ? "Try clearing the current filters."
-                : "Feedback you submit on generated suggestions and recommendations will appear here."
+                : "Rate a few generated suggestions in Generate and your personal feedback signals will start to appear here."
             }
-            actionLabel={entries.length ? "Clear filters" : undefined}
-            onAction={entries.length ? () => {
-              setQuery("");
-              setTargetFilter("");
-            } : undefined}
+            actionLabel={entries.length ? "Clear filters" : "Open Generate"}
+            onAction={
+              entries.length
+                ? () => {
+                    setQuery("");
+                    setTargetFilter("");
+                  }
+                : () => navigate("/generate")
+            }
           />
         </div>
       ) : (

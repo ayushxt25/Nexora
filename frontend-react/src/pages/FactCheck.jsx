@@ -69,8 +69,8 @@ export default function FactCheck() {
             <h1 className="text-2xl font-semibold text-white">Fact Check</h1>
           </div>
           <p className="mt-2 text-sm text-white/50 max-w-3xl">
-            Verify a topic before you reference it in relationship prep. The backend currently returns a concise
-            summary, not citations or confidence scoring.
+            Check a topic before you bring it into a meeting or outreach note. Nexora returns a concise verification
+            summary you can review quickly.
           </p>
         </div>
       </section>
@@ -126,24 +126,25 @@ export default function FactCheck() {
 
         <section className="glass rounded-2xl p-5 lg:p-6 space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-white">Evidence and confidence</h2>
+            <h2 className="text-base font-semibold text-white">What you'll see</h2>
             <p className="mt-1 text-sm text-white/45">
-              This workspace only shows verification details the backend actually returns.
+              This workspace stays focused on the details available for each check.
             </p>
           </div>
 
           <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
             <p className="text-xs uppercase tracking-wide text-white/35">Confidence signal</p>
             <p className="mt-2 text-sm text-white/60">
-              No explicit confidence score is currently provided by the backend.
+              Nexora does not show a separate confidence score here, so use the summary as a quick sense check before
+              you mention the topic.
             </p>
           </div>
 
           <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-wide text-white/35">Source detail</p>
+            <p className="text-xs uppercase tracking-wide text-white/35">Result format</p>
             <p className="mt-2 text-sm text-white/60">
-              The response is a summary-only verification result. Source URLs and citation breakdowns are not exposed
-              to the frontend today.
+              Results appear as a concise summary today, so this view is best for a fast verification pass rather than
+              formal citation review.
             </p>
           </div>
         </section>
@@ -190,7 +191,7 @@ export default function FactCheck() {
         <EmptyState
           icon={Search}
           title="No fact-check yet"
-          description="Enter a topic to verify before using it in conversation prep."
+          description="Verification summaries will appear here after a successful check."
         />
       ) : null}
     </motion.div>

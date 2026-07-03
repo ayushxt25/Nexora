@@ -195,7 +195,7 @@ function hasGraphStructure(graph, nodes) {
 
 function GraphCanvas({ nodes, selectedId, hoveredId, onHover, onLeave, onSelect }) {
   if (!nodes.length) {
-    return <p className="text-sm text-white/35">No graph nodes available.</p>;
+    return <p className="text-sm text-white/35">No contacts to map yet.</p>;
   }
 
   const { nodes: positioned, width, height } = computeNodePositions(nodes);
@@ -573,7 +573,7 @@ export default function NetworkGraph() {
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <InsightCard
               title="Graph visualization"
-              subtitle="Node size reflects relationship score. Cluster regions come from backend cluster output."
+              subtitle="Node size reflects relationship strength. Cluster regions appear when shared signals are available."
               icon={Network}
             >
               {hasVisualGraph ? (
@@ -587,8 +587,8 @@ export default function NetworkGraph() {
                     onSelect={setSelectedId}
                   />
                   <p className="mt-4 text-sm text-white/40">
-                    The backend does not expose pairwise edges or edge weights, so this graph uses real node, cluster, centrality,
-                    and tie-category data without inventing unsupported connection lines.
+                    This view highlights contact position, clustering, and tie strength using the relationship signals
+                    Nexora has today.
                   </p>
                 </>
               ) : (
@@ -598,8 +598,8 @@ export default function NetworkGraph() {
                     title={filteredNodes.length <= 1 ? "Graph structure is still sparse" : "Not enough graph structure yet"}
                     description={
                       filteredNodes.length <= 1
-                        ? "You have real graph data, but not enough connected relationship structure yet to make a full graph canvas useful."
-                        : "The backend has returned contacts, but not enough cluster or tie-strength structure to justify a large graph view yet."
+                        ? "Add more contacts and interactions to give Nexora enough relationship structure to map."
+                        : "There are a few signals here already, but not enough shared structure yet for a richer graph view."
                     }
                   />
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
@@ -610,28 +610,28 @@ export default function NetworkGraph() {
                         className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
                       >
                         <p className="text-sm font-medium text-white">Add more contacts</p>
-                        <p className="mt-1 text-sm text-white/48">Broader contact coverage helps the backend build centrality and grouping signals.</p>
+                        <p className="mt-1 text-sm text-white/48">Broader contact coverage gives Nexora more relationship signals to work with.</p>
                       </button>
                       <button
                         onClick={() => navigate("/contacts")}
                         className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
                       >
                         <p className="text-sm font-medium text-white">Log interactions</p>
-                        <p className="mt-1 text-sm text-white/48">Interaction history helps tie strength, weak-tie, and bridge detection emerge honestly.</p>
+                        <p className="mt-1 text-sm text-white/48">Interaction history helps tie strength, bridge signals, and weak ties emerge naturally.</p>
                       </button>
                       <button
                         onClick={() => navigate("/events")}
                         className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
                       >
                         <p className="text-sm font-medium text-white">Create events</p>
-                        <p className="mt-1 text-sm text-white/48">Events can provide the backend with shared context that later supports clustering.</p>
+                        <p className="mt-1 text-sm text-white/48">Shared events create common context that can strengthen future clusters.</p>
                       </button>
                       <button
                         onClick={() => navigate("/recommendations")}
                         className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
                       >
                         <p className="text-sm font-medium text-white">Review recommendations</p>
-                        <p className="mt-1 text-sm text-white/48">Relationship activity across the product helps stronger graph-level signals appear over time.</p>
+                        <p className="mt-1 text-sm text-white/48">Ongoing relationship activity helps stronger network signals appear over time.</p>
                       </button>
                     </div>
                   </div>
@@ -697,7 +697,7 @@ export default function NetworkGraph() {
                   ) : (
                     <div className="rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3">
                       <p className="text-sm text-white/45">
-                        This contact is not part of a returned cluster. The backend currently surfaces it as a standalone graph node.
+                        This contact is showing up as a standalone node for now.
                       </p>
                     </div>
                   )}
@@ -732,7 +732,7 @@ export default function NetworkGraph() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <InsightCard title="Strong relationships" subtitle="Backend-identified strong ties." icon={TrendingUp}>
+            <InsightCard title="Strong relationships" subtitle="The contacts with the strongest current relationship signals." icon={TrendingUp}>
               {graph?.strong_tie_contacts?.length ? (
                 <div className="space-y-3">
                   {graph.strong_tie_contacts.map((item) => (
@@ -747,11 +747,11 @@ export default function NetworkGraph() {
                   ))}
                 </div>
               ) : (
-                <EmptyState title="No strong relationships" description="The backend did not return strong tie contacts yet." />
+                <EmptyState title="No strong relationships yet" description="Add more interactions and relationship activity to surface stronger ties." />
               )}
             </InsightCard>
 
-            <InsightCard title="Weak relationships" subtitle="Weak-tie candidates surfaced by the backend." icon={TrendingDown}>
+            <InsightCard title="Weak relationships" subtitle="Lighter ties that could be worth reactivating." icon={TrendingDown}>
               {graph?.weak_tie_candidates?.length ? (
                 <div className="space-y-3">
                   {graph.weak_tie_candidates.map((item) => (
@@ -787,11 +787,11 @@ export default function NetworkGraph() {
                   ))}
                 </div>
               ) : (
-                <EmptyState title="No bridge contacts" description="The backend did not return any bridge connections for this network yet." />
+                <EmptyState title="No bridge contacts yet" description="As your network grows, Nexora will highlight the contacts who connect different parts of it." />
               )}
             </InsightCard>
 
-            <InsightCard title="Relationship clusters" subtitle="Cluster memberships surfaced by backend graph intelligence." icon={Users2}>
+            <InsightCard title="Relationship clusters" subtitle="Shared groups emerging across your network." icon={Users2}>
               {graph?.clusters?.length ? (
                 <div className="space-y-3">
                   {graph.clusters.map((cluster) => (
@@ -802,7 +802,7 @@ export default function NetworkGraph() {
                   ))}
                 </div>
               ) : (
-                <EmptyState title="No clusters available" description="Cluster visualization depends on backend cluster output, which is currently empty." />
+                <EmptyState title="No clusters yet" description="Clusters appear once Nexora sees enough shared context across contacts and events." />
               )}
             </InsightCard>
           </div>
@@ -823,7 +823,7 @@ export default function NetworkGraph() {
                   ))}
                 </div>
               ) : (
-                <EmptyState title="No isolated contacts" description="The backend is not flagging any isolated nodes right now." />
+                <EmptyState title="No isolated contacts" description="No contacts currently stand out as isolated." />
               )}
             </InsightCard>
 

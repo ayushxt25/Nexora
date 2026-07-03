@@ -55,6 +55,41 @@ function getOpportunitySection(type) {
   return "Priority opportunities";
 }
 
+function getOpportunityEmptyCopy(sectionTitle) {
+  switch (sectionTitle) {
+    case "Priority opportunities":
+      return {
+        title: "No priority opportunities yet",
+        description: "Nexora will surface timely openings here as your network signals get stronger.",
+      };
+    case "Warm introductions":
+      return {
+        title: "No warm introductions yet",
+        description: "Bridge-style introductions will appear once your network shows stronger cross-connection signals.",
+      };
+    case "Reconnection opportunities":
+      return {
+        title: "No reconnection opportunities yet",
+        description: "When a contact starts to drift, Nexora will flag the best moment to reconnect.",
+      };
+    case "Relationship growth opportunities":
+      return {
+        title: "No growth opportunities yet",
+        description: "Build more momentum with your strongest contacts to unlock clearer growth signals.",
+      };
+    case "Event-related opportunities":
+      return {
+        title: "No event opportunities yet",
+        description: "Add upcoming events to surface preparation and outreach opportunities here.",
+      };
+    default:
+      return {
+        title: "No signals yet",
+        description: "Add more contacts, events, and follow-ups to unlock this section.",
+      };
+  }
+}
+
 function inferredStatus(item, followUpMap) {
   if (!item.related_follow_up_id) return "No linked follow-up";
   const followUp = followUpMap.get(item.related_follow_up_id);
@@ -594,7 +629,7 @@ export default function Opportunities() {
           <EmptyState
             icon={Target}
             title="No opportunities match this view"
-            description="Try clearing a filter or add more relationship data so the backend can surface opportunity signals."
+            description="Try clearing a filter or add more contacts, follow-ups, and events to surface timely openings."
             actionLabel="Clear filters"
             onAction={() => {
               setQuery("");
@@ -615,12 +650,20 @@ export default function Opportunities() {
                 <span className="text-xs text-white/35">{items.length}</span>
               </div>
               {items.length === 0 ? (
-                <div className="glass rounded-2xl">
-                  <EmptyState
-                    icon={Users2}
-                    title={`No ${sectionTitle.toLowerCase()}`}
-                    description="The backend did not return items for this category under the current filters."
-                  />
+                <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-xl border border-white/8 bg-white/[0.04] p-2">
+                      <Users2 className="h-4 w-4 text-white/45" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {getOpportunityEmptyCopy(sectionTitle).title}
+                      </p>
+                      <p className="mt-1 text-sm text-white/45">
+                        {getOpportunityEmptyCopy(sectionTitle).description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="grid gap-4 xl:grid-cols-2">
@@ -653,11 +696,11 @@ export default function Opportunities() {
       <section className="glass rounded-2xl p-5 lg:p-6">
         <div className="flex items-center gap-2 mb-3">
           <CalendarClock className="h-4 w-4 text-accent" />
-          <h2 className="text-base font-semibold text-white">Backend limitations</h2>
+          <h2 className="text-base font-semibold text-white">How opportunity status works</h2>
         </div>
         <p className="text-sm text-white/55 max-w-3xl">
-          Opportunity lifecycle uses the backend action lifecycle API, and follow-up conversion now uses the atomic
-          backend conversion endpoint so the follow-up record and lifecycle state stay in sync.
+          Accept, dismiss, complete, and follow-up conversions keep each opportunity aligned with the real actions you
+          take across your workspace.
         </p>
       </section>
 

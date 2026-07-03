@@ -50,6 +50,36 @@ function getRecommendationSection(type) {
   return "Next Best Actions";
 }
 
+function getRecommendationEmptyCopy(sectionTitle) {
+  switch (sectionTitle) {
+    case "Next Best Actions":
+      return {
+        title: "No priority actions yet",
+        description: "Nexora will surface the next best moves here as your relationship history grows.",
+      };
+    case "Recommended Follow-ups":
+      return {
+        title: "No follow-up prompts yet",
+        description: "Add contacts, interactions, or follow-ups to unlock more timely follow-up guidance.",
+      };
+    case "Relationship Recovery Suggestions":
+      return {
+        title: "No recovery signals yet",
+        description: "When a relationship starts to cool, recovery suggestions will appear here.",
+      };
+    case "High Value Connection Suggestions":
+      return {
+        title: "No high-value connection signals yet",
+        description: "Strengthen a few key contacts and Nexora will highlight who deserves extra attention.",
+      };
+    default:
+      return {
+        title: "No signals yet",
+        description: "Add more relationship activity to unlock this section.",
+      };
+  }
+}
+
 function getLifecycleTone(status) {
   if (status === "accepted") return "text-emerald-300 bg-emerald-500/10 border-emerald-500/20";
   if (status === "dismissed") return "text-red-300 bg-red-500/10 border-red-500/20";
@@ -584,7 +614,7 @@ const categoryOptions = [
           <EmptyState
             icon={Lightbulb}
             title="No recommendations match this view"
-            description="Try clearing a filter or add more relationship data to unlock recommendation coverage."
+            description="Try clearing a filter or add more relationship activity to unlock new actions."
             actionLabel="Clear filters"
             onAction={() => {
               setQuery("");
@@ -605,12 +635,20 @@ const categoryOptions = [
                 <span className="text-xs text-white/35">{items.length}</span>
               </div>
               {items.length === 0 ? (
-                <div className="glass rounded-2xl">
-                  <EmptyState
-                    icon={Users2}
-                    title={`No ${sectionTitle.toLowerCase()}`}
-                    description="The backend did not return items for this category under the current filters."
-                  />
+                <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-xl border border-white/8 bg-white/[0.04] p-2">
+                      <Users2 className="h-4 w-4 text-white/45" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {getRecommendationEmptyCopy(sectionTitle).title}
+                      </p>
+                      <p className="mt-1 text-sm text-white/45">
+                        {getRecommendationEmptyCopy(sectionTitle).description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="grid gap-4 xl:grid-cols-2">
@@ -643,11 +681,11 @@ const categoryOptions = [
       <section className="glass rounded-2xl p-5 lg:p-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4 text-accent" />
-          <h2 className="text-base font-semibold text-white">Backend-backed action model</h2>
+          <h2 className="text-base font-semibold text-white">How recommendation status works</h2>
         </div>
         <p className="text-sm text-white/55 max-w-3xl">
-          Recommendation lifecycle uses the backend action lifecycle API, and follow-up conversion now uses the atomic
-          backend conversion endpoint so the follow-up record and lifecycle state stay in sync.
+          Accept, dismiss, complete, and follow-up conversions update the live status of each recommendation so your
+          workspace stays aligned with the actions you actually take.
         </p>
       </section>
 
