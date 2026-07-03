@@ -3,6 +3,8 @@ Tests for app.routes.auth -- registration and login endpoints.
 """
 
 from app.config import (
+    get_admin_emails,
+    get_admin_usernames,
     get_supabase_audience,
     get_supabase_auth_enabled,
     get_supabase_dual_auth_enabled,
@@ -23,6 +25,7 @@ def test_register_new_user_succeeds(client):
     assert response.status_code == 201
     body = response.json()
     assert body["username"] == "alice"
+    assert body["role"] == "user"
     assert "id" in body
     assert "password" not in body  # never echo the password back
 
@@ -49,6 +52,7 @@ def test_login_with_correct_credentials_returns_token(client):
     body = response.json()
     assert "access_token" in body
     assert body["token_type"] == "bearer"
+    assert body["role"] == "user"
 
 
 def test_login_with_wrong_password_fails(client):
@@ -92,6 +96,8 @@ def test_supabase_config_defaults_are_safe(monkeypatch):
         "SUPABASE_AUDIENCE",
         "SUPABASE_AUTH_ENABLED",
         "SUPABASE_DUAL_AUTH_ENABLED",
+        "ADMIN_USERNAMES",
+        "ADMIN_EMAILS",
     ):
         monkeypatch.delenv(key, raising=False)
 
@@ -100,6 +106,8 @@ def test_supabase_config_defaults_are_safe(monkeypatch):
     assert get_supabase_audience() == "authenticated"
     assert get_supabase_auth_enabled() is False
     assert get_supabase_dual_auth_enabled() is True
+    assert get_admin_usernames() == []
+    assert get_admin_emails() == []
 
 
 def test_supabase_user_resolution_can_create_local_user_from_verified_claims(db_session, monkeypatch):
@@ -215,3 +223,39 @@ def test_supabase_jwks_cache_reuses_fetched_keys(monkeypatch):
 
     assert first == second
     assert fetched == ["https://demo.supabase.co/auth/v1/.well-known/jwks.json"]
+
+
+def test_legacy_admin_bootstrap_assigns_role_on_register_and_login(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "localadmin")
+
+    register_response = client.post(
+        "/auth/register", json={"username": "localadmin", "password": "supersecret123"}
+    )
+    assert register_response.status_code == 201
+    assert register_response.json()["role"] == "admin"
+
+    login_response = client.post(
+        "/auth/login", json={"username": "localadmin", "password": "supersecret123"}
+    )
+    assert login_response.status_code == 200
+    assert login_response.json()["role"] == "admin"
+
+
+def test_supabase_user_resolution_assigns_admin_from_configured_email(db_session, monkeypatch):
+    monkeypatch.setenv("ADMIN_EMAILS", "boss@example.com")
+    monkeypatch.setattr("app.dependencies.get_supabase_auth_enabled", lambda: True)
+    monkeypatch.setattr("app.dependencies.get_supabase_dual_auth_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.dependencies.verify_supabase_jwt",
+        lambda token: SupabaseJWTClaims(
+            supabase_user_id="supabase-admin-1",
+            email="boss@example.com",
+            role="user",
+            raw_claims={"sub": "supabase-admin-1"},
+        ),
+    )
+
+    user = get_current_user(token="supabase-token", db=db_session)
+
+    assert user.supabase_user_id == "supabase-admin-1"
+    assert user.role == "admin"

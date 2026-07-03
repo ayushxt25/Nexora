@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api_utils import DEFAULT_LIMIT, MAX_LIMIT
 from app.database import get_db
 from app.db_models import User
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_admin_user
 from app.models import (
     ActionLifecycleStateResponse,
     RankerStatusResponse,
@@ -107,7 +107,7 @@ def next_best_actions(
 @router.get("/recommendations/training-data", response_model=List[RecommendationTrainingDataResponse])
 def recommendation_training_data(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ) -> List[RecommendationTrainingDataResponse]:
     return [
@@ -119,7 +119,7 @@ def recommendation_training_data(
 @router.post("/recommendations/train-ranker", response_model=RankerTrainResponse)
 def train_recommendation_ranker(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ) -> RankerTrainResponse:
     result = train_ranker(db, current_user.id)
@@ -129,7 +129,7 @@ def train_recommendation_ranker(
 @router.get("/recommendations/ranker-status", response_model=RankerStatusResponse)
 def recommendation_ranker_status(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ) -> RankerStatusResponse:
     status = get_ranker_status(db, current_user.id)

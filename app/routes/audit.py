@@ -7,7 +7,7 @@ from app.api_utils import pagination_limit, pagination_offset
 from app.database import get_db
 from app.db_models import AuditLog
 from app.db_models import User
-from app.dependencies import get_current_user
+from app.dependencies import require_admin_user
 from app.models import AuditLogResponse
 from app.services.audit_logger import load_audit_logs
 
@@ -23,7 +23,7 @@ def list_audit_logs(
     status_filter: Optional[str] = None,
     entity_type: Optional[str] = None,
     sort_order: Literal["asc", "desc"] = "desc",
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ) -> List[AuditLogResponse]:
     query = db.query(AuditLog).filter(AuditLog.user_id == current_user.id)

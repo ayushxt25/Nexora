@@ -102,3 +102,16 @@ def get_supabase_auth_enabled() -> bool:
 
 def get_supabase_dual_auth_enabled() -> bool:
     return os.getenv("SUPABASE_DUAL_AUTH_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _parse_csv_env(name: str) -> list[str]:
+    raw_value = os.getenv(name, "")
+    return [item.strip().lower() for item in raw_value.split(",") if item.strip()]
+
+
+def get_admin_usernames() -> list[str]:
+    return _parse_csv_env("ADMIN_USERNAMES")
+
+
+def get_admin_emails() -> list[str]:
+    return _parse_csv_env("ADMIN_EMAILS")

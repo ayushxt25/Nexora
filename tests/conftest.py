@@ -91,3 +91,14 @@ def auth_headers(client):
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def admin_headers(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "adminuser")
+    client.post("/auth/register", json={"username": "adminuser", "password": "testpassword123"})
+    response = client.post(
+        "/auth/login", json={"username": "adminuser", "password": "testpassword123"}
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

@@ -19,6 +19,7 @@ from app.auth import create_access_token, hash_password, verify_password
 from app.database import get_db
 from app.db_models import User
 from app.models import TokenResponse, UserLoginRequest, UserRegisterRequest, UserResponse
+from app.roles import resolve_user_role
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,7 +33,11 @@ def register(request: UserRegisterRequest, db: Session = Depends(get_db)) -> Use
             detail="A user with that username already exists",
         )
 
-    user = User(username=request.username, hashed_password=hash_password(request.password))
+    user = User(
+        username=request.username,
+        hashed_password=hash_password(request.password),
+        role=resolve_user_role(username=request.username),
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -50,4 +55,4 @@ def login(request: UserLoginRequest, db: Session = Depends(get_db)) -> TokenResp
         )
 
     access_token = create_access_token(subject=user.username)
-    return TokenResponse(access_token=access_token)
+    return TokenResponse(access_token=access_token, role=user.role)

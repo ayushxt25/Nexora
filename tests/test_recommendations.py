@@ -374,30 +374,30 @@ def test_recommendation_feedback_backward_compatibility_with_type_id(client, aut
     assert "Prior feedback signaled" in item["reason"]
 
 
-def test_recommendation_impressions_are_logged(client, auth_headers):
+def test_recommendation_impressions_are_logged(client, admin_headers):
     client.post(
         "/contacts",
         json={"name": "Log Me", "company": "Orbit", "role": "Founder", "relationship_strength": 5},
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
-    response = client.get("/recommendations", headers=auth_headers)
+    response = client.get("/recommendations", headers=admin_headers)
     assert response.status_code == 200
 
-    training_data = client.get("/recommendations/training-data", headers=auth_headers)
+    training_data = client.get("/recommendations/training-data", headers=admin_headers)
     assert training_data.status_code == 200
     rows = training_data.json()
     assert rows
     assert any(row["recommendation_type"] == "strengthen_high_value_contact" for row in rows)
 
 
-def test_training_data_generated_from_impressions_and_feedback(client, auth_headers):
+def test_training_data_generated_from_impressions_and_feedback(client, admin_headers):
     client.post(
         "/contacts",
         json={"name": "Train", "company": "North", "role": "Founder", "relationship_strength": 5},
-        headers=auth_headers,
+        headers=admin_headers,
     )
-    recommendations = client.get("/recommendations", headers=auth_headers).json()
+    recommendations = client.get("/recommendations", headers=admin_headers).json()
     recommendation = next(
         item for item in recommendations if item["recommendation_type"] == "strengthen_high_value_contact"
     )
@@ -409,10 +409,10 @@ def test_training_data_generated_from_impressions_and_feedback(client, auth_head
             "target_type": "recommendation",
             "target_id": recommendation["recommendation_id"],
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
-    response = client.get("/recommendations/training-data", headers=auth_headers)
+    response = client.get("/recommendations/training-data", headers=admin_headers)
     assert response.status_code == 200
     row = next(
         entry
@@ -547,13 +547,14 @@ def test_feedback_tuning_still_works_with_lifecycle_state(client, auth_headers):
     assert "Prior feedback signaled" in updated["reason"]
 
 
-def test_recommendation_training_data_empty_state(client, auth_headers):
-    response = client.get("/recommendations/training-data", headers=auth_headers)
+def test_recommendation_training_data_empty_state(client, admin_headers):
+    response = client.get("/recommendations/training-data", headers=admin_headers)
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_recommendation_training_data_user_isolation(client):
+def test_recommendation_training_data_user_isolation(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "train_a,train_b")
     client.post("/auth/register", json={"username": "train_a", "password": "passwordA123"})
     token_a = client.post(
         "/auth/login", json={"username": "train_a", "password": "passwordA123"}

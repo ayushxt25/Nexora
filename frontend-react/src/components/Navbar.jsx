@@ -532,10 +532,8 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { username, logout } = useAuth();
-  // TODO: Replace this temporary username-based admin check with `user.role === "admin"`
-  // once Supabase auth and real backend role claims are available.
-  const isAdmin = username === "ayush2522";
+  const { username, logout, role } = useAuth();
+  const isAdmin = role === "admin";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 glass">

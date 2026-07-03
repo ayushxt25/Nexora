@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.db_models import User
-from app.dependencies import get_current_user
+from app.dependencies import require_admin_user
 from app.models import AdvancedRetrievalResultResponse
 from app.services.advanced_retrieval_service import advanced_retrieve_relationship_intelligence
 
@@ -27,7 +27,7 @@ def retrieval_debug(
     themes: Optional[str] = None,
     opportunity_type: Optional[str] = None,
     recommendation_type: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_user),
     db: Session = Depends(get_db),
 ) -> List[AdvancedRetrievalResultResponse]:
     results = advanced_retrieve_relationship_intelligence(

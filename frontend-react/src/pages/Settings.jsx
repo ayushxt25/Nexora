@@ -13,14 +13,14 @@ function toneLabel(value) {
 }
 
 export default function Settings() {
-  const { username, isAuthenticated } = useAuth();
+  const { username, isAuthenticated, role } = useAuth();
   const { themePreference, setThemePreference, themeOptions } = useTheme();
   const [profile, setProfile] = useState(null);
   const [personalization, setPersonalization] = useState(null);
   const [feedbackSummary, setFeedbackSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const isAdmin = username === "ayush2522";
+  const isAdmin = role === "admin";
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -106,6 +106,10 @@ export default function Settings() {
             <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-white/35">Authentication</p>
               <p className="mt-2 text-sm text-white/75">{isAuthenticated ? "Authenticated" : "Signed out"}</p>
+            </div>
+            <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-white/35">Role</p>
+              <p className="mt-2 text-sm text-white/75">{role || "Unknown"}</p>
             </div>
           </div>
         </section>

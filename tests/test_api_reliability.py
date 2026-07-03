@@ -74,14 +74,14 @@ def test_recommendations_support_filtering_and_pagination(client, auth_headers):
     assert body[0]["recommendation_type"] == "complete_overdue_follow_up"
 
 
-def test_audit_logs_filtering(client, auth_headers):
+def test_audit_logs_filtering(client, admin_headers):
     client.post(
         "/generate-conversation",
         json={"description": "AI meetup", "interests": ["robotics"]},
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
-    response = client.get("/audit/logs?event_type=generation_request&limit=10", headers=auth_headers)
+    response = client.get("/audit/logs?event_type=generation_request&limit=10", headers=admin_headers)
     assert response.status_code == 200
     body = response.json()
     assert body

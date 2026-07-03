@@ -43,7 +43,8 @@ def test_audit_log_fail_open(monkeypatch):
     log_audit_event(event_type="test", status="failed", message="should not raise")
 
 
-def test_audit_logs_endpoint_and_user_isolation(client):
+def test_audit_logs_endpoint_and_user_isolation(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "audit_a,audit_b")
     client.post("/auth/register", json={"username": "audit_a", "password": "passwordA123"})
     token_a = client.post(
         "/auth/login", json={"username": "audit_a", "password": "passwordA123"}
@@ -69,28 +70,28 @@ def test_audit_logs_endpoint_and_user_isolation(client):
     assert response_b.json() == []
 
 
-def test_generation_creates_audit_log(client, auth_headers):
+def test_generation_creates_audit_log(client, admin_headers):
     response = client.post(
         "/generate-conversation",
         json={"description": "Healthcare dinner", "interests": ["ai"]},
-        headers=auth_headers,
+        headers=admin_headers,
     )
     assert response.status_code == 200
 
-    logs = client.get("/audit/logs", headers=auth_headers).json()
+    logs = client.get("/audit/logs", headers=admin_headers).json()
     assert any(log["event_type"] == "generation_request" for log in logs)
 
 
-def test_recommendation_creates_audit_log(client, auth_headers):
+def test_recommendation_creates_audit_log(client, admin_headers):
     client.post(
         "/contacts",
         json={"name": "Reco", "company": "Orbit", "role": "Founder", "relationship_strength": 5},
-        headers=auth_headers,
+        headers=admin_headers,
     )
-    response = client.get("/recommendations", headers=auth_headers)
+    response = client.get("/recommendations", headers=admin_headers)
     assert response.status_code == 200
 
-    logs = client.get("/audit/logs", headers=auth_headers).json()
+    logs = client.get("/audit/logs", headers=admin_headers).json()
     assert any(log["event_type"] == "recommendation_generation" for log in logs)
 
 

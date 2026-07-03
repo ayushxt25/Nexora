@@ -35,8 +35,8 @@ class FakeRedisClient:
                 yield key
 
 
-def test_metrics_empty_state_and_uptime(client, auth_headers):
-    response = client.get("/metrics", headers=auth_headers)
+def test_metrics_empty_state_and_uptime(client, admin_headers):
+    response = client.get("/metrics", headers=admin_headers)
     assert response.status_code == 200
     body = response.json()
     assert body["uptime_seconds"] >= 0
@@ -45,14 +45,14 @@ def test_metrics_empty_state_and_uptime(client, auth_headers):
     assert body["cache"]["hit_ratio"] == 0.0
 
 
-def test_metrics_collection_and_summary(client, auth_headers):
+def test_metrics_collection_and_summary(client, admin_headers):
     client.get("/health")
     client.post(
         "/generate-conversation",
         json={"description": "AI meetup", "interests": ["robotics"]},
-        headers=auth_headers,
+        headers=admin_headers,
     )
-    response = client.get("/metrics/summary", headers=auth_headers)
+    response = client.get("/metrics/summary", headers=admin_headers)
     assert response.status_code == 200
     body = response.json()
     assert "summary" in body
@@ -60,41 +60,42 @@ def test_metrics_collection_and_summary(client, auth_headers):
     assert body["service_health_snapshot"] in {"ok", "degraded"}
 
 
-def test_cache_metrics(client, auth_headers, monkeypatch):
+def test_cache_metrics(client, admin_headers, monkeypatch):
     reset_cache_backend()
     monkeypatch.setattr("app.services.cache_service.build_cache_backend", lambda: RedisCacheBackend(FakeRedisClient()))
-    first = client.get("/recommendations", headers=auth_headers)
-    second = client.get("/recommendations", headers=auth_headers)
+    first = client.get("/recommendations", headers=admin_headers)
+    second = client.get("/recommendations", headers=admin_headers)
     assert first.status_code == 200
     assert second.status_code == 200
 
-    metrics = client.get("/metrics", headers=auth_headers).json()
+    metrics = client.get("/metrics", headers=admin_headers).json()
     assert metrics["cache"]["cache_hits"] >= 1
     assert metrics["cache"]["cache_misses"] >= 1
 
 
-def test_retrieval_metrics_and_fail_open_behavior(client, auth_headers, monkeypatch):
+def test_retrieval_metrics_and_fail_open_behavior(client, admin_headers, monkeypatch):
     client.post(
         "/contacts",
         json={"name": "Asha", "company": "North", "role": "Founder", "notes": "Healthcare AI"},
-        headers=auth_headers,
+        headers=admin_headers,
     )
-    ok = client.get("/retrieval/debug?q=healthcare ai", headers=auth_headers)
+    ok = client.get("/retrieval/debug?q=healthcare ai", headers=admin_headers)
     assert ok.status_code == 200
 
     monkeypatch.setattr(
         "app.services.advanced_retrieval_service.semantic_search_memories",
         lambda **kwargs: (_ for _ in ()).throw(RuntimeError("broken")),
     )
-    failed = client.get("/retrieval/debug?q=broken", headers=auth_headers)
+    failed = client.get("/retrieval/debug?q=broken", headers=admin_headers)
     assert failed.status_code == 200
 
-    metrics = client.get("/metrics", headers=auth_headers).json()
+    metrics = client.get("/metrics", headers=admin_headers).json()
     assert metrics["retrieval"]["retrieval_count"] >= 2
     assert metrics["retrieval"]["retrieval_failures"] >= 1
 
 
-def test_recommendation_and_opportunity_metrics_with_user_isolation(client):
+def test_recommendation_and_opportunity_metrics_with_user_isolation(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "metrics_a,metrics_b")
     client.post("/auth/register", json={"username": "metrics_a", "password": "passwordA123"})
     token_a = client.post(
         "/auth/login", json={"username": "metrics_a", "password": "passwordA123"}
@@ -146,10 +147,10 @@ def test_recommendation_and_opportunity_metrics_with_user_isolation(client):
     assert metrics_b["user_effectiveness"]["opportunities"]["tracked_follow_ups"] == 0
 
 
-def test_background_task_metrics(client, auth_headers, monkeypatch):
+def test_background_task_metrics(client, admin_headers, monkeypatch):
     monkeypatch.setattr("app.services.task_dispatcher.get_celery_enabled", lambda: False)
     assert task_dispatcher.dispatch_optional_task("sync_user_semantic_memory", 1) is False
-    metrics = client.get("/metrics", headers=auth_headers).json()
+    metrics = client.get("/metrics", headers=admin_headers).json()
     assert metrics["background_tasks"]["dispatch_count"] >= 1
     assert metrics["background_tasks"]["dispatch_failures"] >= 1
 

@@ -21,18 +21,18 @@ def test_feature_extraction():
     assert len(features.to_vector()) == 6
 
 
-def test_insufficient_data_fallback(client, auth_headers, monkeypatch, tmp_path):
+def test_insufficient_data_fallback(client, admin_headers, monkeypatch, tmp_path):
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_enabled", lambda: True)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_model_dir", lambda: tmp_path)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_min_labeled_rows", lambda: 3)
 
-    response = client.post("/recommendations/train-ranker", headers=auth_headers)
+    response = client.post("/recommendations/train-ranker", headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["trained"] is False
     assert response.json()["status"] == "insufficient_data"
 
 
-def test_training_with_labeled_data_and_ranker_status(client, auth_headers, monkeypatch, tmp_path):
+def test_training_with_labeled_data_and_ranker_status(client, admin_headers, monkeypatch, tmp_path):
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_enabled", lambda: True)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_model_dir", lambda: tmp_path)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_min_labeled_rows", lambda: 2)
@@ -40,7 +40,7 @@ def test_training_with_labeled_data_and_ranker_status(client, auth_headers, monk
     contact = client.post(
         "/contacts",
         json={"name": "Asha", "company": "Orbit", "role": "Founder", "relationship_strength": 5},
-        headers=auth_headers,
+        headers=admin_headers,
     ).json()
     client.post(
         "/events",
@@ -48,10 +48,10 @@ def test_training_with_labeled_data_and_ranker_status(client, auth_headers, monk
             "title": "Mixer",
             "event_date": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
-    recommendations = client.get("/recommendations", headers=auth_headers).json()
+    recommendations = client.get("/recommendations", headers=admin_headers).json()
     strong = next(
         item
         for item in recommendations
@@ -68,7 +68,7 @@ def test_training_with_labeled_data_and_ranker_status(client, auth_headers, monk
             "target_type": "recommendation",
             "target_id": strong["recommendation_id"],
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
     client.post(
         "/feedback",
@@ -78,14 +78,14 @@ def test_training_with_labeled_data_and_ranker_status(client, auth_headers, monk
             "target_type": "recommendation",
             "target_id": event["recommendation_id"],
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
-    train_response = client.post("/recommendations/train-ranker", headers=auth_headers)
+    train_response = client.post("/recommendations/train-ranker", headers=admin_headers)
     assert train_response.status_code == 200
     assert train_response.json()["trained"] is True
 
-    status_response = client.get("/recommendations/ranker-status", headers=auth_headers)
+    status_response = client.get("/recommendations/ranker-status", headers=admin_headers)
     assert status_response.status_code == 200
     status = status_response.json()
     assert status["enabled"] is True
@@ -109,6 +109,7 @@ def test_scoring_fallback_when_model_missing(client, auth_headers, monkeypatch, 
 
 
 def test_ranker_user_isolation(client, monkeypatch, tmp_path):
+    monkeypatch.setenv("ADMIN_USERNAMES", "rank_a,rank_b")
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_enabled", lambda: True)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_model_dir", lambda: tmp_path)
     monkeypatch.setattr("app.services.ml_ranker_service.get_ml_ranker_min_labeled_rows", lambda: 2)

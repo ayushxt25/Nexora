@@ -35,7 +35,7 @@ export default function Login() {
         await login(identifier, password);
       } else {
         const data = await api.login(identifier, password);
-        await login(data.access_token, identifier);
+        await login(data.access_token, identifier, data.role || null);
       }
       navigate("/onboarding", { replace: true, state: { fromAuth: true } });
     } catch (err) {

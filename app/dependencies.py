@@ -30,7 +30,7 @@ from app.auth import create_unusable_password_hash, decode_access_token
 from app.config import get_supabase_auth_enabled, get_supabase_dual_auth_enabled
 from app.database import get_db
 from app.db_models import User
-from app.roles import coerce_user_role
+from app.roles import coerce_user_role, is_admin_role, resolve_user_role
 from app.supabase_auth import SupabaseJWTClaims, verify_supabase_jwt
 
 logger = logging.getLogger("networking_assistant")
@@ -52,7 +52,16 @@ def _get_legacy_user(token: str, db: Session) -> User | None:
     username = decode_access_token(token)
     if username is None:
         return None
-    return db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        return None
+
+    desired_role = resolve_user_role(username=user.username, fallback_role=user.role)
+    if desired_role != user.role:
+        user.role = desired_role
+        db.commit()
+        db.refresh(user)
+    return user
 
 
 def _derive_supabase_username(email: str | None, supabase_user_id: str) -> str:
@@ -76,8 +85,13 @@ def _next_available_username(db: Session, base_username: str) -> str:
 def _get_or_create_supabase_user(claims: SupabaseJWTClaims, db: Session) -> User:
     user = db.query(User).filter(User.supabase_user_id == claims.supabase_user_id).first()
     if user is not None:
-        if not getattr(user, "role", None):
-            user.role = coerce_user_role(claims.role)
+        desired_role = resolve_user_role(
+            username=user.username,
+            email=claims.email,
+            fallback_role=user.role or claims.role,
+        )
+        if desired_role != user.role:
+            user.role = desired_role
             db.commit()
             db.refresh(user)
         logger.info("Supabase auth reused local user for sub=%s", claims.supabase_user_id)
@@ -90,7 +104,11 @@ def _get_or_create_supabase_user(claims: SupabaseJWTClaims, db: Session) -> User
     user = User(
         username=username,
         supabase_user_id=claims.supabase_user_id,
-        role=coerce_user_role(claims.role),
+        role=resolve_user_role(
+            username=username,
+            email=claims.email,
+            fallback_role=claims.role,
+        ),
         hashed_password=create_unusable_password_hash(claims.supabase_user_id),
     )
     db.add(user)
@@ -138,3 +156,14 @@ def get_current_user(
         raise credentials_exception
 
     raise credentials_exception
+
+
+def require_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not is_admin_role(current_user.role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

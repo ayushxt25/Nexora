@@ -20,15 +20,49 @@ function deriveDisplayNameFromSupabaseUser(authUser) {
   return authUser.id || null;
 }
 
+function deriveRoleFromSupabaseUser(authUser) {
+  const candidates = [
+    authUser?.app_metadata?.role,
+    authUser?.user_metadata?.role,
+    authUser?.role,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim().toLowerCase();
+    }
+  }
+
+  return null;
+}
+
 export function AuthProvider({ children }) {
   const provider = getAuthProvider();
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState(() => localStorage.getItem("username") || null);
+  const [role, setRole] = useState(() => localStorage.getItem("user_role") || null);
   const [token, setToken] = useState(() =>
     isSupabaseAuthProvider() ? null : localStorage.getItem("access_token") || null
   );
   const [loading, setLoading] = useState(isSupabaseAuthProvider());
   const navigate = useNavigate();
+
+  const persistSessionIdentity = useCallback((nextUsername, nextRole) => {
+    setUsername(nextUsername);
+    setRole(nextRole);
+
+    if (nextUsername) {
+      localStorage.setItem("username", nextUsername);
+    } else {
+      localStorage.removeItem("username");
+    }
+
+    if (nextRole) {
+      localStorage.setItem("user_role", nextRole);
+    } else {
+      localStorage.removeItem("user_role");
+    }
+  }, []);
 
   const login = useCallback(
     async (...args) => {
@@ -45,26 +79,21 @@ export function AuthProvider({ children }) {
 
         const authUser = data.user || data.session?.user || null;
         const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
+        const nextRole = deriveRoleFromSupabaseUser(authUser);
         setUser(authUser);
         setToken(data.session?.access_token || null);
-        setUsername(nextUsername);
-        if (nextUsername) {
-          localStorage.setItem("username", nextUsername);
-        } else {
-          localStorage.removeItem("username");
-        }
+        persistSessionIdentity(nextUsername, nextRole);
         return data;
       }
 
-      const [accessToken, legacyUsername] = args;
+      const [accessToken, legacyUsername, legacyRole = null] = args;
       localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("username", legacyUsername);
       setToken(accessToken);
-      setUsername(legacyUsername);
-      setUser(legacyUsername ? { username: legacyUsername } : null);
-      return { access_token: accessToken };
+      setUser(legacyUsername ? { username: legacyUsername, role: legacyRole } : null);
+      persistSessionIdentity(legacyUsername, legacyRole);
+      return { access_token: accessToken, role: legacyRole };
     },
-    [provider]
+    [persistSessionIdentity, provider]
   );
 
   const register = useCallback(
@@ -98,8 +127,10 @@ export function AuthProvider({ children }) {
     }
 
     localStorage.removeItem("username");
+    localStorage.removeItem("user_role");
     setToken(null);
     setUsername(null);
+    setRole(null);
     setUser(null);
   }, [provider]);
 
@@ -107,9 +138,11 @@ export function AuthProvider({ children }) {
     if (provider !== "supabase") {
       const storedUsername = localStorage.getItem("username") || null;
       const storedToken = localStorage.getItem("access_token") || null;
+      const storedRole = localStorage.getItem("user_role") || null;
       setUsername(storedUsername);
       setToken(storedToken);
-      setUser(storedUsername ? { username: storedUsername } : null);
+      setRole(storedRole);
+      setUser(storedUsername ? { username: storedUsername, role: storedRole } : null);
       setLoading(false);
       return undefined;
     }
@@ -120,6 +153,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       setUsername(null);
+      setRole(null);
       setLoading(false);
       return undefined;
     }
@@ -134,14 +168,10 @@ export function AuthProvider({ children }) {
 
       const authUser = session?.user || null;
       const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
+      const nextRole = deriveRoleFromSupabaseUser(authUser);
       setUser(authUser);
       setToken(session?.access_token || null);
-      setUsername(nextUsername);
-      if (nextUsername) {
-        localStorage.setItem("username", nextUsername);
-      } else {
-        localStorage.removeItem("username");
-      }
+      persistSessionIdentity(nextUsername, nextRole);
       setLoading(false);
     }
 
@@ -154,14 +184,10 @@ export function AuthProvider({ children }) {
 
       const authUser = session?.user || null;
       const nextUsername = deriveDisplayNameFromSupabaseUser(authUser);
+      const nextRole = deriveRoleFromSupabaseUser(authUser);
       setUser(authUser);
       setToken(session?.access_token || null);
-      setUsername(nextUsername);
-      if (nextUsername) {
-        localStorage.setItem("username", nextUsername);
-      } else {
-        localStorage.removeItem("username");
-      }
+      persistSessionIdentity(nextUsername, nextRole);
       setLoading(false);
     });
 
@@ -169,7 +195,7 @@ export function AuthProvider({ children }) {
       active = false;
       subscription.unsubscribe();
     };
-  }, [provider]);
+  }, [persistSessionIdentity, provider]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -185,6 +211,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         username,
+        role,
         token,
         isAuthenticated,
         login,

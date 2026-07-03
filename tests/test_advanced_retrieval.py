@@ -3,17 +3,17 @@ from datetime import datetime, timedelta, timezone
 from app.services.advanced_retrieval_service import AdvancedRetrievalResult, RetrievalScoreComponents
 
 
-def test_advanced_retrieval_empty_state(client, auth_headers):
-    response = client.get("/retrieval/debug?q=founder", headers=auth_headers)
+def test_advanced_retrieval_empty_state(client, admin_headers):
+    response = client.get("/retrieval/debug?q=founder", headers=admin_headers)
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_headers):
+def test_advanced_retrieval_is_deterministic_and_explainable(client, admin_headers):
     client.put(
         "/profile",
         json={"goals": ["healthcare"], "interests": ["ai"], "preferred_tone": "warm"},
-        headers=auth_headers,
+        headers=admin_headers,
     )
     contact = client.post(
         "/contacts",
@@ -25,7 +25,7 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
             "notes": "Strong healthcare AI operator",
             "relationship_strength": 5,
         },
-        headers=auth_headers,
+        headers=admin_headers,
     ).json()
     event = client.post(
         "/events",
@@ -34,7 +34,7 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
             "description": "Summit for AI founders in healthcare",
             "event_date": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
         },
-        headers=auth_headers,
+        headers=admin_headers,
     ).json()
     client.post(
         "/interactions",
@@ -45,7 +45,7 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
             "notes": "Discussed healthcare AI partnerships",
             "sentiment": "positive",
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
     client.post(
         "/follow-ups",
@@ -55,10 +55,10 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
             "status": "pending",
             "due_date": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
     rec = next(
-        item for item in client.get("/recommendations", headers=auth_headers).json()
+        item for item in client.get("/recommendations", headers=admin_headers).json()
         if item["recommendation_type"] == "prepare_for_upcoming_event"
     )
     client.post(
@@ -69,16 +69,16 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
             "target_type": "recommendation",
             "target_id": rec["recommendation_id"],
         },
-        headers=auth_headers,
+        headers=admin_headers,
     )
 
     first = client.get(
         "/retrieval/debug?q=healthcare ai founder&interests=healthcare,ai&themes=partnerships",
-        headers=auth_headers,
+        headers=admin_headers,
     )
     second = client.get(
         "/retrieval/debug?q=healthcare ai founder&interests=healthcare,ai&themes=partnerships",
-        headers=auth_headers,
+        headers=admin_headers,
     )
     assert first.status_code == 200
     assert [item["id"] for item in first.json()] == [item["id"] for item in second.json()]
@@ -98,17 +98,18 @@ def test_advanced_retrieval_is_deterministic_and_explainable(client, auth_header
     assert body[0]["reasons"]
 
 
-def test_advanced_retrieval_fail_open_behavior(client, auth_headers, monkeypatch):
+def test_advanced_retrieval_fail_open_behavior(client, admin_headers, monkeypatch):
     monkeypatch.setattr(
         "app.services.advanced_retrieval_service.semantic_search_memories",
         lambda **kwargs: (_ for _ in ()).throw(RuntimeError("vector down")),
     )
-    response = client.get("/retrieval/debug?q=anything", headers=auth_headers)
+    response = client.get("/retrieval/debug?q=anything", headers=admin_headers)
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_advanced_retrieval_user_isolation(client):
+def test_advanced_retrieval_user_isolation(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAMES", "retrieval_a,retrieval_b")
     client.post("/auth/register", json={"username": "retrieval_a", "password": "passwordA123"})
     token_a = client.post(
         "/auth/login", json={"username": "retrieval_a", "password": "passwordA123"}
