@@ -8,7 +8,7 @@ export function MiniBarChart({ data = [], valueFormatter = (value) => value, col
   }
 
   return (
-    <div className="space-y-3">
+    <div className="chart-frame space-y-3">
       {data.map((item) => (
         <div key={item.label} className="space-y-1.5">
           <div className="flex items-center justify-between text-xs text-white/45">
@@ -45,8 +45,8 @@ export function MiniLineChart({ data = [] }) {
     .join(" ");
 
   return (
-    <div className="space-y-3">
-      <div className="h-44 rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+    <div className="chart-frame space-y-3">
+      <div className="h-36 rounded-2xl border border-white/6 bg-white/[0.03] p-4 sm:h-44">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
           <polyline
             fill="none"
@@ -63,7 +63,7 @@ export function MiniLineChart({ data = [] }) {
           })}
         </svg>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {data.map((item) => (
           <div key={item.label} className="rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2">
             <p className="text-xs text-white/35">{item.label}</p>
@@ -88,7 +88,7 @@ export function DonutChart({ segments = [], size = 132 }) {
   let cumulative = 0;
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+    <div className="chart-frame flex flex-col items-center gap-4 sm:flex-row sm:items-start">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         <circle
           cx={size / 2}

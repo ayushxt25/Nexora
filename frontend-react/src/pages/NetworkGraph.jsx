@@ -181,6 +181,18 @@ function computeNodePositions(nodes) {
   return { nodes: positioned, width, height };
 }
 
+function hasGraphStructure(graph, nodes) {
+  if (!graph || nodes.length === 0) return false;
+  if (nodes.length <= 1) return false;
+  return (
+    (graph.clusters?.length || 0) > 0 ||
+    (graph.strong_tie_contacts?.length || 0) > 0 ||
+    (graph.weak_tie_candidates?.length || 0) > 0 ||
+    (graph.bridge_contacts?.length || 0) > 0 ||
+    (graph.isolated_contacts?.length || 0) > 0
+  );
+}
+
 function GraphCanvas({ nodes, selectedId, hoveredId, onHover, onLeave, onSelect }) {
   if (!nodes.length) {
     return <p className="text-sm text-white/35">No graph nodes available.</p>;
@@ -189,8 +201,8 @@ function GraphCanvas({ nodes, selectedId, hoveredId, onHover, onLeave, onSelect 
   const { nodes: positioned, width, height } = computeNodePositions(nodes);
 
   return (
-    <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 overflow-hidden">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[420px]">
+    <div className="chart-frame overflow-x-auto rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[320px] min-w-[680px] w-full sm:h-[380px] lg:h-[420px]">
         {Array.from(
           positioned
             .filter((node) => node.clusterInfo)
@@ -260,7 +272,7 @@ function GraphCanvas({ nodes, selectedId, hoveredId, onHover, onLeave, onSelect 
 
 function InsightCard({ title, subtitle, icon: Icon, children }) {
   return (
-    <section className="glass rounded-2xl p-5 lg:p-6">
+    <section className="glass min-w-0 overflow-hidden rounded-2xl p-5 lg:p-6">
       <div className="mb-4 flex items-center gap-2">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/5">
           <Icon className="h-4 w-4 text-accent" />
@@ -394,6 +406,7 @@ export default function NetworkGraph() {
     () => filteredNodes.find((node) => node.id === selectedId) || filteredNodes[0] || null,
     [filteredNodes, selectedId]
   );
+  const hasVisualGraph = useMemo(() => hasGraphStructure(graph, filteredNodes), [graph, filteredNodes]);
 
   useEffect(() => {
     if (selectedNode && selectedId !== selectedNode.id) {
@@ -424,7 +437,7 @@ export default function NetworkGraph() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-4 lg:grid-cols-2">
+      <div className="page-shell grid gap-4 lg:grid-cols-2">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -435,7 +448,7 @@ export default function NetworkGraph() {
 
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-shell max-w-5xl">
         <ErrorState message={error} onRetry={loadData} />
       </div>
     );
@@ -446,22 +459,34 @@ export default function NetworkGraph() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <section className="page-header">
+        <div className="hero-panel px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
+          <p className="page-kicker">Graph Intelligence</p>
           <div className="flex items-center gap-2">
             <Network className="h-5 w-5 text-accent" />
-            <h1 className="text-2xl font-semibold text-white">Network Graph</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Network Graph</h1>
           </div>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
             Explore strong ties, bridge contacts, isolated nodes, and relationship clusters from the backend graph intelligence layer.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Real nodes only
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              No invented edges
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Backend graph-derived signals
+            </span>
+          </div>
         </div>
       </section>
 
-      <section className="glass rounded-2xl p-4 lg:p-5 space-y-4">
-        <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+      <section className="glass filter-panel space-y-4">
+        <div className="filter-grid xl:[grid-template-columns:minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
             <input
@@ -551,18 +576,67 @@ export default function NetworkGraph() {
               subtitle="Node size reflects relationship score. Cluster regions come from backend cluster output."
               icon={Network}
             >
-              <GraphCanvas
-                nodes={filteredNodes}
-                selectedId={selectedNode?.id}
-                hoveredId={hoveredId}
-                onHover={setHoveredId}
-                onLeave={() => setHoveredId(null)}
-                onSelect={setSelectedId}
-              />
-              <p className="mt-4 text-sm text-white/40">
-                The backend does not expose pairwise edges or edge weights, so this graph uses real node, cluster, centrality,
-                and tie-category data without inventing unsupported connection lines.
-              </p>
+              {hasVisualGraph ? (
+                <>
+                  <GraphCanvas
+                    nodes={filteredNodes}
+                    selectedId={selectedNode?.id}
+                    hoveredId={hoveredId}
+                    onHover={setHoveredId}
+                    onLeave={() => setHoveredId(null)}
+                    onSelect={setSelectedId}
+                  />
+                  <p className="mt-4 text-sm text-white/40">
+                    The backend does not expose pairwise edges or edge weights, so this graph uses real node, cluster, centrality,
+                    and tie-category data without inventing unsupported connection lines.
+                  </p>
+                </>
+              ) : (
+                <div className="space-y-5">
+                  <EmptyState
+                    icon={Network}
+                    title={filteredNodes.length <= 1 ? "Graph structure is still sparse" : "Not enough graph structure yet"}
+                    description={
+                      filteredNodes.length <= 1
+                        ? "You have real graph data, but not enough connected relationship structure yet to make a full graph canvas useful."
+                        : "The backend has returned contacts, but not enough cluster or tie-strength structure to justify a large graph view yet."
+                    }
+                  />
+                  <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                    <p className="text-xs uppercase tracking-wide text-white/35">How to unlock richer graph insights</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <button
+                        onClick={() => navigate("/contacts")}
+                        className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
+                      >
+                        <p className="text-sm font-medium text-white">Add more contacts</p>
+                        <p className="mt-1 text-sm text-white/48">Broader contact coverage helps the backend build centrality and grouping signals.</p>
+                      </button>
+                      <button
+                        onClick={() => navigate("/contacts")}
+                        className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
+                      >
+                        <p className="text-sm font-medium text-white">Log interactions</p>
+                        <p className="mt-1 text-sm text-white/48">Interaction history helps tie strength, weak-tie, and bridge detection emerge honestly.</p>
+                      </button>
+                      <button
+                        onClick={() => navigate("/events")}
+                        className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
+                      >
+                        <p className="text-sm font-medium text-white">Create events</p>
+                        <p className="mt-1 text-sm text-white/48">Events can provide the backend with shared context that later supports clustering.</p>
+                      </button>
+                      <button
+                        onClick={() => navigate("/recommendations")}
+                        className="interactive-card rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left"
+                      >
+                        <p className="text-sm font-medium text-white">Review recommendations</p>
+                        <p className="mt-1 text-sm text-white/48">Relationship activity across the product helps stronger graph-level signals appear over time.</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </InsightCard>
 
             <InsightCard
@@ -628,7 +702,7 @@ export default function NetworkGraph() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="action-cluster">
                     <button
                       onClick={() => navigate(`/contacts/${selectedNode.id}`)}
                       className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
@@ -662,10 +736,10 @@ export default function NetworkGraph() {
               {graph?.strong_tie_contacts?.length ? (
                 <div className="space-y-3">
                   {graph.strong_tie_contacts.map((item) => (
-                    <button
-                      key={`strong-${item.contact_id}`}
-                      onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                      className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
+                      <button
+                        key={`strong-${item.contact_id}`}
+                        onClick={() => navigate(`/contacts/${item.contact_id}`)}
+                        className="interactive-card w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
                     >
                       <p className="text-sm font-medium text-white">{item.name}</p>
                       <p className="mt-1 text-sm text-white/50">{item.reason}</p>
@@ -681,10 +755,10 @@ export default function NetworkGraph() {
               {graph?.weak_tie_candidates?.length ? (
                 <div className="space-y-3">
                   {graph.weak_tie_candidates.map((item) => (
-                    <button
-                      key={`weak-${item.contact_id}`}
-                      onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                      className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
+                      <button
+                        key={`weak-${item.contact_id}`}
+                        onClick={() => navigate(`/contacts/${item.contact_id}`)}
+                        className="interactive-card w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
                     >
                       <p className="text-sm font-medium text-white">{item.name}</p>
                       <p className="mt-1 text-sm text-white/50">{item.reason}</p>
@@ -702,10 +776,10 @@ export default function NetworkGraph() {
               {graph?.bridge_contacts?.length ? (
                 <div className="space-y-3">
                   {graph.bridge_contacts.map((item) => (
-                    <button
-                      key={`bridge-${item.contact_id}`}
-                      onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                      className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
+                      <button
+                        key={`bridge-${item.contact_id}`}
+                        onClick={() => navigate(`/contacts/${item.contact_id}`)}
+                        className="interactive-card w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
                     >
                       <p className="text-sm font-medium text-white">{item.name}</p>
                       <p className="mt-1 text-sm text-white/50">{item.reason}</p>
@@ -741,7 +815,7 @@ export default function NetworkGraph() {
                     <button
                       key={`isolated-${item.contact_id}`}
                       onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                      className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
+                      className="interactive-card w-full rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 text-left hover:bg-white/[0.06] transition-colors"
                     >
                       <p className="text-sm font-medium text-white">{item.name}</p>
                       <p className="mt-1 text-sm text-white/50">{item.reason}</p>

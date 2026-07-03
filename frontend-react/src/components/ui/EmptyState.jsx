@@ -1,17 +1,17 @@
 export default function EmptyState({ icon: Icon, title, description, actionLabel, onAction }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-4">
+    <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
       {Icon && (
-        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4">
-          <Icon className="w-6 h-6 text-white/40" />
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] shadow-[0_18px_48px_rgba(2,6,23,0.28)]">
+          <Icon className="h-6 w-6 text-white/55" />
         </div>
       )}
-      <h3 className="text-white font-medium mb-1">{title}</h3>
-      {description && <p className="text-sm text-white/50 max-w-sm mb-4">{description}</p>}
+      <h3 className="mb-2 text-balance text-lg font-semibold text-white">{title}</h3>
+      {description && <p className="mb-5 max-w-md text-balance text-sm leading-6 text-white/52">{description}</p>}
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="px-4 py-2 rounded-lg bg-accent/15 text-accent text-sm font-medium hover:bg-accent/25 transition-colors"
+          className="rounded-xl border border-accent/20 bg-accent/14 px-4 py-2.5 text-sm font-medium text-accent transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/20"
         >
           {actionLabel}
         </button>

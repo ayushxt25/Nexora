@@ -9,7 +9,7 @@ export function SkeletonLine({ width = "100%", height = "1rem" }) {
 
 export function SkeletonCard() {
   return (
-    <div className="glass rounded-xl p-4 flex flex-col gap-3">
+    <div className="glass min-w-0 rounded-xl p-4 flex flex-col gap-3">
       <SkeletonLine width="40%" height="0.75rem" />
       <SkeletonLine width="60%" height="1.5rem" />
     </div>
@@ -28,7 +28,7 @@ export function SkeletonRow({ columns = 4 }) {
 
 export function SkeletonTable({ rows = 5, columns = 4 }) {
   return (
-    <div className="glass rounded-xl overflow-hidden">
+    <div className="glass min-w-0 overflow-hidden rounded-xl">
       {Array.from({ length: rows }).map((_, i) => (
         <SkeletonRow key={i} columns={columns} />
       ))}

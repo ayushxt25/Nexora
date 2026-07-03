@@ -2,18 +2,18 @@ import { AlertCircle } from "lucide-react";
 
 export default function ErrorState({ message, onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-        <AlertCircle className="w-6 h-6 text-red-400" />
+    <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/18 bg-red-500/10 shadow-[0_18px_48px_rgba(127,29,29,0.18)]">
+        <AlertCircle className="h-6 w-6 text-red-300" />
       </div>
-      <h3 className="text-white font-medium mb-1">Something went wrong</h3>
-      <p className="text-sm text-white/50 max-w-sm mb-4">
+      <h3 className="mb-2 text-lg font-semibold text-white">Something went wrong</h3>
+      <p className="mb-5 max-w-md text-balance text-sm leading-6 text-white/52">
         {message || "That request didn't go through. Try again."}
       </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-4 py-2 rounded-lg bg-white/5 text-white text-sm font-medium hover:bg-white/10 transition-colors border border-white/10"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10"
         >
           Retry
         </button>

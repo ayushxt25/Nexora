@@ -83,7 +83,7 @@ function OpportunityCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
-      className="glass rounded-2xl p-5 hover:border-white/12 transition-colors"
+      className="glass min-w-0 overflow-hidden rounded-2xl p-5 transition-colors hover:border-white/12"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -123,7 +123,7 @@ function OpportunityCard({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="action-cluster mt-5">
         {item.related_contact_id ? (
           <button
             onClick={() => onOpenContact(item.related_contact_id)}
@@ -492,7 +492,7 @@ export default function Opportunities() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-4 lg:grid-cols-2">
+      <div className="page-shell grid gap-4 lg:grid-cols-2">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -503,7 +503,7 @@ export default function Opportunities() {
 
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-shell max-w-5xl">
         <ErrorState message={error} onRetry={loadData} />
       </div>
     );
@@ -514,22 +514,23 @@ export default function Opportunities() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <section className="page-header">
+        <div className="page-header-copy">
+          <p className="page-kicker">Opportunity Detection</p>
           <div className="flex items-center gap-2">
             <Target className="h-5 w-5 text-accent" />
-            <h1 className="text-2xl font-semibold text-white">Opportunities</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Opportunities</h1>
           </div>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-3 text-sm leading-6 text-white/54">
             Strategic opportunities derived from relationship scores, bridge signals, events, and overdue actions.
           </p>
         </div>
       </section>
 
-      <section className="glass rounded-2xl p-4 lg:p-5 space-y-4">
-        <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr]">
+      <section className="glass filter-panel space-y-4">
+        <div className="filter-grid xl:[grid-template-columns:minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
             <input
@@ -571,7 +572,7 @@ export default function Opportunities() {
           />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="filter-grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
           <CustomSelect
             value={statusFilter}
             onChange={setStatusFilter}
@@ -609,7 +610,7 @@ export default function Opportunities() {
         <div className="space-y-6">
           {Object.entries(groupedSections).map(([sectionTitle, items]) => (
             <section key={sectionTitle} className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-medium uppercase tracking-wide text-white/55">{sectionTitle}</h2>
                 <span className="text-xs text-white/35">{items.length}</span>
               </div>

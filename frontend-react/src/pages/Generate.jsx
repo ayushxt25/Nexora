@@ -209,21 +209,30 @@ export default function Generate() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <section className="page-header">
+        <div className="hero-panel px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
+          <p className="page-kicker">AI Preparation Workspace</p>
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-accent" />
-            <h1 className="text-2xl font-semibold text-white">Relationship Prep Workspace</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Relationship Prep Workspace</h1>
           </div>
-          <p className="mt-2 text-sm text-white/50 max-w-3xl">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
             Build conversation starters from real event, contact, recommendation, and opportunity context. Successful
             generations are saved automatically to your history.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Real generated output
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              History saved automatically
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="action-cluster">
           <Button variant="secondary" icon={History} onClick={() => navigate("/history")}>
             Open history
           </Button>
@@ -234,7 +243,7 @@ export default function Generate() {
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <section className="glass rounded-2xl p-5 lg:p-6">
+        <section className="glass min-w-0 overflow-hidden rounded-2xl p-5 lg:p-6">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-white">Preparation input</h2>
             <p className="mt-1 text-sm text-white/45">
@@ -266,7 +275,7 @@ export default function Generate() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="action-cluster">
               {examplePrompts.map((example) => (
                 <button
                   type="button"
@@ -281,7 +290,7 @@ export default function Generate() {
 
             {error ? <ErrorState message={error} /> : null}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="action-cluster">
               <Button type="submit" icon={Sparkles} loading={loading}>
                 Generate conversation starters
               </Button>
@@ -484,7 +493,7 @@ export default function Generate() {
                   </button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="action-cluster">
                   {feedbackActions.map((item) => {
                     const active = feedbackGiven[suggestion] === item.key;
                     return (

@@ -82,8 +82,10 @@ function NavDropdown({ group, isActive }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          isActive ? "bg-accent/15 text-accent" : "text-white/60 hover:bg-white/5 hover:text-white"
+        className={`icon-button-soft flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-sm font-medium transition-all duration-200 xl:px-3 ${
+          isActive
+            ? "border-accent/20 bg-accent/14 text-white shadow-[0_12px_32px_rgba(124,92,255,0.14)]"
+            : "border-transparent text-white/60 hover:border-white/10 hover:bg-white/6 hover:text-white"
         }`}
       >
         {group.label}
@@ -97,14 +99,14 @@ function NavDropdown({ group, isActive }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full z-50 mt-1 min-w-[180px] rounded-lg glass py-1.5"
+            className="absolute left-0 top-full z-50 mt-2 max-h-[min(70vh,26rem)] min-w-[220px] max-w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-white/10 bg-[rgba(10,14,24,0.88)] p-1.5 shadow-[0_24px_80px_rgba(2,6,23,0.55)] backdrop-blur-2xl"
           >
             {group.items.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/68 transition-all duration-150 hover:bg-white/[0.06] hover:text-white"
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -202,9 +204,9 @@ function NotificationMenu({ username, mobile = false, onClose }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-200 ${
+        className={`icon-button-soft relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-200 ${
           open
-            ? "border-white/12 bg-white/10 text-white shadow-[0_12px_30px_rgba(10,14,24,0.28)]"
+            ? "border-white/12 bg-white/10 text-white shadow-[0_18px_40px_rgba(10,14,24,0.34)]"
             : "border-transparent text-white/60 hover:border-white/10 hover:bg-white/5 hover:text-white"
         }`}
         aria-label="Notifications"
@@ -224,7 +226,7 @@ function NotificationMenu({ username, mobile = false, onClose }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 top-full z-[90] mt-3 w-[380px] overflow-hidden rounded-3xl border border-white/12 bg-[rgba(10,14,24,0.92)] p-2.5 shadow-[0_28px_90px_rgba(2,6,23,0.68)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[rgba(10,14,24,0.8)]"
+            className="absolute right-0 top-full z-[90] mt-3 w-[min(380px,calc(100vw-1rem))] overflow-hidden rounded-[1.75rem] border border-white/12 bg-[rgba(10,14,24,0.92)] p-2.5 shadow-[0_32px_90px_rgba(2,6,23,0.72)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[rgba(10,14,24,0.82)]"
           >
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3.5">
               <div>
@@ -276,7 +278,7 @@ function NotificationMenu({ username, mobile = false, onClose }) {
                       <button
                         key={item.id}
                         onClick={() => handleOpen(item)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors hover:bg-white/[0.06] ${notificationTone(item.type)}`}
+                    className={`interactive-card w-full rounded-2xl border px-4 py-3 text-left transition-colors hover:bg-white/[0.06] ${notificationTone(item.type)}`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -410,7 +412,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
         aria-expanded={open}
         className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
           open || activeDeveloperRoute
-            ? "border-white/12 bg-white/10 text-white shadow-[0_12px_30px_rgba(10,14,24,0.28)]"
+            ? "border-white/12 bg-white/10 text-white shadow-[0_18px_40px_rgba(10,14,24,0.34)]"
             : "border-transparent text-white/60 hover:border-white/10 hover:bg-white/5 hover:text-white"
         }`}
       >
@@ -428,7 +430,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 top-full z-[90] mt-3 w-[320px] overflow-hidden rounded-3xl border border-white/12 bg-[rgba(10,14,24,0.92)] p-2.5 shadow-[0_28px_90px_rgba(2,6,23,0.68)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[rgba(10,14,24,0.8)]"
+            className="absolute right-0 top-full z-[90] mt-3 w-[min(320px,calc(100vw-1rem))] overflow-hidden rounded-[1.75rem] border border-white/12 bg-[rgba(10,14,24,0.92)] p-2.5 shadow-[0_32px_90px_rgba(2,6,23,0.72)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[rgba(10,14,24,0.82)]"
           >
             <div className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-3.5">
               <div className="flex items-center gap-3">
@@ -448,7 +450,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
                   key={label}
                   to={to}
                   onClick={() => setOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="icon-button-soft flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
                 >
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/8 bg-white/[0.04]">
                     <Icon className="h-4 w-4" />
@@ -473,7 +475,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
                   <button
                     key={option.value}
                     onClick={() => setThemePreference(option.value)}
-                    className={`rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                    className={`rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-150 ${
                       themePreference === option.value
                         ? "border-accent/30 bg-accent/15 text-white"
                         : "border-white/10 bg-white/5 text-white/60 hover:bg-white/[0.06] hover:text-white"
@@ -496,7 +498,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
                       key={to}
                       to={to}
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-amber-100/80 transition-colors hover:bg-amber-500/12 hover:text-amber-50"
+                      className="icon-button-soft flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-amber-100/80 transition-colors hover:bg-amber-500/12 hover:text-amber-50"
                     >
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-amber-500/15 bg-amber-500/10">
                         <Icon className="h-4 w-4" />
@@ -514,7 +516,7 @@ function UserMenu({ username, isAdmin, onLogout, mobile = false, onClose }) {
                   setOpen(false);
                   onLogout();
                 }}
-                className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                className="icon-button-soft flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
               >
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/15 bg-red-500/10">
                   <LogOut className="h-4 w-4" />
@@ -536,19 +538,20 @@ export default function Navbar() {
   const isAdmin = role === "admin";
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/5 glass">
+    <nav className="app-navbar sticky top-0 z-50 border-b glass">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-secondary">
+          <Link to="/dashboard" className="group flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-accent to-accent-secondary shadow-[0_14px_40px_rgba(124,92,255,0.28)] transition-transform duration-200 group-hover:-translate-y-0.5">
               <Users2 className="h-4 w-4 text-white" />
             </div>
-            <span className="hidden font-bold text-white sm:block">
+            <span className="hidden sm:block">
+              <span className="page-kicker block">Relationship Intelligence</span>
               <span className="gradient-text">Nexora</span>
             </span>
           </Link>
 
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center gap-1 lg:flex">
             {navGroups.map((group) => (
               <NavDropdown
                 key={group.label}
@@ -558,19 +561,19 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-3 lg:flex">
             <NotificationMenu username={username} />
             <UserMenu username={username} isAdmin={isAdmin} onLogout={logout} />
           </div>
 
-          <button className="p-2 text-white/70 md:hidden" onClick={() => setMobileOpen((value) => !value)}>
+          <button className="icon-button-soft rounded-xl border border-transparent p-2 text-white/70 transition-all duration-200 hover:border-white/10 hover:bg-white/5 lg:hidden" onClick={() => setMobileOpen((value) => !value)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
       {mobileOpen ? (
-        <div className="space-y-4 border-t border-white/5 px-4 py-3 glass md:hidden">
+        <div className="space-y-4 border-t border-white/5 px-4 py-3 glass lg:hidden">
           {navGroups.map((group) => (
             <div key={group.label}>
               <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wide text-white/40">{group.label}</p>

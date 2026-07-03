@@ -108,10 +108,10 @@ function DashboardSection({ title, subtitle, icon: Icon, actionLabel, onAction, 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="glass rounded-2xl p-5 lg:p-6"
+      className="glass min-w-0 overflow-hidden rounded-2xl p-5 lg:p-6"
     >
-      <div className="flex items-start justify-between gap-4 mb-5">
-        <div>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="page-header-copy">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 border border-white/8">
               <Icon className="h-4 w-4 text-accent" />
@@ -125,7 +125,7 @@ function DashboardSection({ title, subtitle, icon: Icon, actionLabel, onAction, 
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="inline-flex items-center gap-1.5 text-sm text-white/55 hover:text-white transition-colors"
+            className="inline-flex self-start shrink-0 items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
           >
             {actionLabel}
             <ArrowRight className="h-3.5 w-3.5" />
@@ -164,7 +164,7 @@ function InsightRow({ title, description, meta, badge, onClick }) {
     <Wrapper
       onClick={onClick}
       className={`w-full text-left rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 transition-colors ${
-        onClick ? "hover:bg-white/[0.06]" : ""
+        onClick ? "interactive-card hover:bg-white/[0.06]" : ""
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -292,9 +292,6 @@ function Dashboard() {
     useCallback(() => api.network.graphInsights(), [])
   );
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-
   const recommendations = (recommendationsSection.data || []).filter(
     (item) => !HIDDEN_LIFECYCLE_STATUSES.has((item.lifecycle_status || "new").toLowerCase())
   );
@@ -315,18 +312,28 @@ function Dashboard() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
-      <section className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-white/30">Command Center</p>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white mt-2">
-            {greeting}{username ? `, ${username}` : ""}
+      <section className="page-header gap-2">
+        <div className="hero-panel px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
+          <p className="page-kicker">Command Center</p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-[2.35rem]">
+            Welcome back{username ? `, ${username}` : ""}
           </h1>
-          <p className="text-sm sm:text-base text-white/55 mt-2 max-w-2xl">
-            Real-time relationship intelligence from your analytics, recommendations, opportunities,
-            follow-ups, scores, and network graph.
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/58 sm:text-base">
+            Track priorities, opportunities, and follow-ups from one command center.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Live insights
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Priority actions
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Relationship signals
+            </span>
+          </div>
         </div>
       </section>
 
@@ -335,7 +342,7 @@ function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24 }}
-          className="glass rounded-2xl p-5 lg:p-6"
+          className="hero-panel px-5 py-5 lg:px-6 lg:py-6"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl">
@@ -357,7 +364,7 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="action-cluster">
               <button
                 onClick={() => navigate("/onboarding")}
                 className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent/90"
@@ -542,7 +549,7 @@ function Dashboard() {
                   <button
                     key={item.contact_id}
                     onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                    className="w-full text-left rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 hover:bg-white/[0.06] transition-colors"
+                    className="interactive-card w-full text-left rounded-xl border border-white/6 bg-white/[0.03] px-4 py-3 hover:bg-white/[0.06] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -613,7 +620,7 @@ function Dashboard() {
                       <button
                         key={`strong-${item.contact_id}`}
                         onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                        className="block w-full text-left text-sm text-white/70 hover:text-white transition-colors"
+                        className="block w-full rounded-lg px-2 py-1 text-left text-sm text-white/70 transition-colors hover:bg-white/[0.04] hover:text-white"
                       >
                         {item.name}
                       </button>
@@ -631,7 +638,7 @@ function Dashboard() {
                       <button
                         key={`bridge-${item.contact_id}`}
                         onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                        className="block w-full text-left text-sm text-white/70 hover:text-white transition-colors"
+                        className="block w-full rounded-lg px-2 py-1 text-left text-sm text-white/70 transition-colors hover:bg-white/[0.04] hover:text-white"
                       >
                         {item.name}
                       </button>
@@ -649,7 +656,7 @@ function Dashboard() {
                       <button
                         key={`weak-${item.contact_id}`}
                         onClick={() => navigate(`/contacts/${item.contact_id}`)}
-                        className="block w-full text-left text-sm text-white/70 hover:text-white transition-colors"
+                        className="block w-full rounded-lg px-2 py-1 text-left text-sm text-white/70 transition-colors hover:bg-white/[0.04] hover:text-white"
                       >
                         {item.name}
                       </button>

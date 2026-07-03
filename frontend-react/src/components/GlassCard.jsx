@@ -6,8 +6,8 @@ export default function GlassCard({ children, className = "", hover = false, del
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      className={`glass rounded-2xl p-6 ${
-        hover ? "transition-all duration-300 hover:border-white/20 hover:-translate-y-1" : ""
+      className={`glass min-w-0 overflow-hidden rounded-2xl p-4 sm:p-5 lg:p-6 ${
+        hover ? "interactive-card" : ""
       } ${className}`}
     >
       {children}

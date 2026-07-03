@@ -12,15 +12,15 @@ export default function Button({
   icon: Icon,
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
   const variants = {
     primary:
-      "bg-gradient-to-r from-accent to-accent-secondary text-white shadow-lg shadow-accent/20 hover:shadow-accent/40 hover:scale-[1.02]",
+      "border border-accent/20 bg-gradient-to-r from-accent to-accent-secondary text-white shadow-[0_16px_40px_rgba(124,92,255,0.28)] hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(124,92,255,0.35)]",
     secondary:
-      "bg-bg-card border border-white/10 text-white hover:bg-white/5 hover:border-white/20",
-    ghost: "text-white/70 hover:text-white hover:bg-white/5",
-    danger: "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20",
+      "border border-white/10 bg-bg-card text-white hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/6",
+    ghost: "text-white/70 hover:bg-white/5 hover:text-white",
+    danger: "border border-red-500/20 bg-red-500/10 text-red-400 hover:-translate-y-0.5 hover:bg-red-500/20",
   };
 
   return (

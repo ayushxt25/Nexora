@@ -66,7 +66,7 @@ function sortScores(items, sortBy) {
 
 function InsightCard({ title, subtitle, icon: Icon, children }) {
   return (
-    <section className="glass rounded-2xl p-5 lg:p-6">
+    <section className="glass min-w-0 overflow-hidden rounded-2xl p-5 lg:p-6">
       <div className="mb-4 flex items-center gap-2">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/5">
           <Icon className="h-4 w-4 text-accent" />
@@ -303,7 +303,7 @@ export default function RelationshipScores() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-4 lg:grid-cols-2">
+      <div className="page-shell grid gap-4 lg:grid-cols-2">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -314,7 +314,7 @@ export default function RelationshipScores() {
 
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-shell max-w-5xl">
         <ErrorState message={error} onRetry={loadData} />
       </div>
     );
@@ -325,22 +325,31 @@ export default function RelationshipScores() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <section className="page-header">
+        <div className="hero-panel px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
+          <p className="page-kicker">Relationship Scoring</p>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-accent" />
-            <h1 className="text-2xl font-semibold text-white">Relationship Scores</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Relationship Scores</h1>
           </div>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
             Explore high-value connections, risk signals, and score factor explanations from the real scoring engine.
           </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Explainable factors
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
+              Real scoring only
+            </span>
+          </div>
         </div>
       </section>
 
-      <section className="glass rounded-2xl p-4 lg:p-5 space-y-4">
-        <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
+      <section className="glass filter-panel space-y-4">
+        <div className="filter-grid xl:[grid-template-columns:minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
             <input
@@ -374,7 +383,7 @@ export default function RelationshipScores() {
             placeholder="All activity levels"
           />
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 md:grid-cols-2">
             <CustomSelect
               value={dateRange}
               onChange={setDateRange}
@@ -418,7 +427,7 @@ export default function RelationshipScores() {
                   <button
                     key={item.contact_id}
                     onClick={() => setSelectedId(item.contact_id)}
-                    className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
+                    className={`interactive-card w-full rounded-xl border px-4 py-3 text-left transition-colors ${
                       selectedScore?.contact_id === item.contact_id
                         ? "border-accent/30 bg-accent/10"
                         : "border-white/6 bg-white/[0.03] hover:bg-white/[0.06]"
@@ -462,7 +471,7 @@ export default function RelationshipScores() {
                         </div>
                         <ScoreBadge score={item.score} size="sm" />
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="action-cluster mt-3">
                         <button
                           onClick={() => navigate(`/contacts/${item.contact_id}`)}
                           className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"

@@ -47,7 +47,7 @@ function statusTone(status) {
 
 function SectionCard({ title, icon: Icon, actionLabel, onAction, children }) {
   return (
-    <section className="glass rounded-2xl p-5 lg:p-6">
+    <section className="glass min-w-0 overflow-hidden rounded-2xl p-5 lg:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/8 bg-white/5">
@@ -141,7 +141,7 @@ export default function ContactProfile() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+      <div className="page-shell space-y-4">
         <SkeletonLine width="20%" height="1rem" />
         <SkeletonCard />
         <div className="grid gap-4 lg:grid-cols-2">
@@ -155,7 +155,7 @@ export default function ContactProfile() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-shell max-w-6xl">
         <ErrorState message={error} onRetry={refetch} />
       </div>
     );
@@ -170,7 +170,7 @@ export default function ContactProfile() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="page-shell"
     >
       <button
         onClick={() => navigate("/contacts")}
@@ -247,7 +247,7 @@ export default function ContactProfile() {
             </div>
 
             {Array.isArray(contact.tags) && contact.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="action-cluster">
                 {contact.tags.map((tag) => (
                   <span
                     key={tag}
@@ -295,7 +295,7 @@ export default function ContactProfile() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="action-cluster">
               <button
                 onClick={() => setInteractionModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-accent px-3.5 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
