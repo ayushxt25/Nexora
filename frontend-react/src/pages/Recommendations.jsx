@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Filter,
   Lightbulb,
+  MessageSquareHeart,
   MessageSquareX,
   Plus,
   Search,
@@ -95,6 +96,13 @@ function getInferredStatus(item, followUpMap) {
   return followUp.status || "Unknown";
 }
 
+const recommendationFeedbackOptions = [
+  { key: "helpful", label: "Helpful" },
+  { key: "not_helpful", label: "Not helpful" },
+  { key: "irrelevant", label: "Irrelevant" },
+  { key: "too_generic", label: "Too generic" },
+];
+
 function RecommendationCard({
   item,
   contactName,
@@ -107,9 +115,14 @@ function RecommendationCard({
   onComplete,
   onConvert,
   onGenerate,
+  onFeedback,
   accepting,
   dismissing,
   completing,
+  feedbackSubmitting,
+  feedbackValue,
+  feedbackMessage,
+  feedbackError,
 }) {
   return (
     <motion.div
@@ -150,6 +163,41 @@ function RecommendationCard({
             {relationshipScore !== null ? <ScoreBadge score={relationshipScore} size="sm" /> : null}
           </div>
         </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <MessageSquareHeart className="h-4 w-4 text-accent" />
+          <p className="text-sm font-medium text-white">Rate this recommendation</p>
+          <span className="text-xs text-white/35">Separate from accept, dismiss, and complete</span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {recommendationFeedbackOptions.map((option) => {
+            const active = feedbackValue === option.key;
+            return (
+              <button
+                key={option.key}
+                onClick={() => onFeedback(item, option.key)}
+                disabled={feedbackSubmitting || active}
+                className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                  active
+                    ? "border-accent/30 bg-accent/15 text-accent"
+                    : feedbackSubmitting
+                      ? "border-white/10 bg-white/5 text-white/35"
+                      : "border-white/10 bg-white/5 text-white/55 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        {feedbackMessage ? (
+          <p className="mt-3 text-xs text-emerald-300">{feedbackMessage}</p>
+        ) : null}
+        {feedbackError ? (
+          <p className="mt-3 text-xs text-red-300">{feedbackError}</p>
+        ) : null}
       </div>
 
       <div className="action-cluster mt-5">
@@ -240,6 +288,10 @@ export default function Recommendations() {
   const [acceptingId, setAcceptingId] = useState(null);
   const [dismissingId, setDismissingId] = useState(null);
   const [completingId, setCompletingId] = useState(null);
+  const [feedbackSubmittingId, setFeedbackSubmittingId] = useState(null);
+  const [feedbackByRecommendationId, setFeedbackByRecommendationId] = useState({});
+  const [feedbackMessageByRecommendationId, setFeedbackMessageByRecommendationId] = useState({});
+  const [feedbackErrorByRecommendationId, setFeedbackErrorByRecommendationId] = useState({});
   const [followUpTarget, setFollowUpTarget] = useState(null);
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
@@ -471,6 +523,45 @@ export default function Recommendations() {
     }
   }
 
+  async function handleFeedback(item, category) {
+    if (!item?.recommendation_id) return;
+    setFeedbackSubmittingId(item.recommendation_id);
+    setFeedbackErrorByRecommendationId((current) => ({
+      ...current,
+      [item.recommendation_id]: "",
+    }));
+    try {
+      await api.submitFeedback({
+        suggestion: item.title,
+        category,
+        target_type: "recommendation",
+        target_id: item.recommendation_id,
+        notes: item.reason,
+      });
+      setFeedbackByRecommendationId((current) => ({
+        ...current,
+        [item.recommendation_id]: category,
+      }));
+      setFeedbackMessageByRecommendationId((current) => ({
+        ...current,
+        [item.recommendation_id]: "Feedback saved",
+      }));
+      window.setTimeout(() => {
+        setFeedbackMessageByRecommendationId((current) => ({
+          ...current,
+          [item.recommendation_id]: "",
+        }));
+      }, 1600);
+    } catch (err) {
+      setFeedbackErrorByRecommendationId((current) => ({
+        ...current,
+        [item.recommendation_id]: err.message || "Could not save feedback right now.",
+      }));
+    } finally {
+      setFeedbackSubmittingId(null);
+    }
+  }
+
 const categoryOptions = [
     { value: "", label: "All categories" },
     { value: "Next Best Actions", label: "Next Best Actions" },
@@ -666,9 +757,14 @@ const categoryOptions = [
                       onComplete={handleComplete}
                       onConvert={setFollowUpTarget}
                       onGenerate={handleGenerate}
+                      onFeedback={handleFeedback}
                       accepting={acceptingId === item.recommendation_id}
                       dismissing={dismissingId === item.recommendation_id}
                       completing={completingId === item.recommendation_id}
+                      feedbackSubmitting={feedbackSubmittingId === item.recommendation_id}
+                      feedbackValue={feedbackByRecommendationId[item.recommendation_id] || ""}
+                      feedbackMessage={feedbackMessageByRecommendationId[item.recommendation_id] || ""}
+                      feedbackError={feedbackErrorByRecommendationId[item.recommendation_id] || ""}
                     />
                   ))}
                 </div>
