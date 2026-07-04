@@ -533,7 +533,7 @@ export default function RelationshipScores() {
                   ]}
                 />
               ) : (
-                <EmptyState title="Select a relationship" description="Choose a relationship to inspect its factor breakdown." />
+                <EmptyState title="Select a relationship" description="Choose a relationship from the ranked list to inspect its score breakdown." />
               )}
             </InsightCard>
 
@@ -573,7 +573,7 @@ export default function RelationshipScores() {
                   ))}
                 </div>
               ) : (
-                <EmptyState title="No selected relationship" description="Pick a relationship from the ranked list to inspect it." />
+                <EmptyState title="No selected relationship" description="Pick a relationship from the ranked list to inspect its current signals." />
               )}
             </InsightCard>
           </div>

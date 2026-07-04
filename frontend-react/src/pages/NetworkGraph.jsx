@@ -201,8 +201,8 @@ function GraphCanvas({ nodes, selectedId, hoveredId, onHover, onLeave, onSelect 
   const { nodes: positioned, width, height } = computeNodePositions(nodes);
 
   return (
-    <div className="chart-frame overflow-x-auto rounded-2xl border border-white/6 bg-white/[0.03] p-4">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[320px] min-w-[680px] w-full sm:h-[380px] lg:h-[420px]">
+    <div className="chart-frame overflow-x-auto rounded-2xl border border-white/6 bg-white/[0.03] p-3 sm:p-4">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[280px] min-w-[560px] w-full sm:h-[360px] sm:min-w-[640px] lg:h-[420px]">
         {Array.from(
           positioned
             .filter((node) => node.clusterInfo)
@@ -548,7 +548,7 @@ export default function NetworkGraph() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="dashboard-stat-grid">
             <div className="glass rounded-2xl p-4">
               <p className="text-sm text-white/45">Contacts</p>
               <p className="mt-2 text-2xl font-semibold text-white">{graph?.total_contacts ?? 0}</p>

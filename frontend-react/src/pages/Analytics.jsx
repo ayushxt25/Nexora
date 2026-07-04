@@ -413,7 +413,7 @@ export default function Analytics() {
       </section>
 
       {analytics && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="dashboard-stat-grid">
           <StatCard label="Network health" value={`${Math.round(analytics.network_health_score)}%`} icon={TrendingUp} />
           <StatCard label="Contacts" value={analytics.total_contacts} icon={Users2} />
           <StatCard label="Interactions" value={analytics.total_interactions} icon={CalendarClock} />

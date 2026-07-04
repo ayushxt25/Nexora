@@ -701,7 +701,7 @@ export default function Opportunities() {
             options={statusOptions}
             placeholder="All statuses"
           />
-          <div className="flex flex-wrap items-center gap-3 text-xs text-white/45">
+          <div className="dense-meta-row rounded-xl border border-white/8 bg-white/[0.03] px-3 py-3 text-xs text-white/45">
             <span>{filteredOpportunities.length} opportunities</span>
             <span className="text-white/20">•</span>
             <span>{filteredOpportunities.filter((item) => item.related_event_id).length} event-related</span>
@@ -737,12 +737,12 @@ export default function Opportunities() {
                 <span className="text-xs text-white/35">{items.length}</span>
               </div>
               {items.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4">
+                <div className="compact-empty-panel rounded-2xl border border-dashed border-white/10 bg-white/[0.03]">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-xl border border-white/8 bg-white/[0.04] p-2">
+                    <div className="empty-icon">
                       <Users2 className="h-4 w-4 text-white/45" />
                     </div>
-                    <div>
+                    <div className="empty-copy">
                       <p className="text-sm font-medium text-white">
                         {getOpportunityEmptyCopy(sectionTitle).title}
                       </p>
