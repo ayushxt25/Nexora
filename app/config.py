@@ -115,3 +115,20 @@ def get_admin_usernames() -> list[str]:
 
 def get_admin_emails() -> list[str]:
     return _parse_csv_env("ADMIN_EMAILS")
+
+
+def get_tavily_api_key() -> str | None:
+    value = os.getenv("TAVILY_API_KEY", "").strip()
+    return value or None
+
+
+def get_fact_check_external_search_enabled() -> bool:
+    return os.getenv("FACT_CHECK_EXTERNAL_SEARCH_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def get_fact_check_external_max_results() -> int:
+    return int(os.getenv("FACT_CHECK_EXTERNAL_MAX_RESULTS", "5"))
+
+
+def get_external_search_timeout_seconds() -> int:
+    return int(os.getenv("EXTERNAL_SEARCH_TIMEOUT_SECONDS", "5"))

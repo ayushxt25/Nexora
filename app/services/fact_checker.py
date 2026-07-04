@@ -18,6 +18,13 @@ from urllib.parse import quote
 
 import requests
 
+from app.config import (
+    get_fact_check_external_max_results,
+    get_fact_check_external_search_enabled,
+    get_tavily_api_key,
+)
+from app.services.external_search import tavily_search
+
 WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/{}"
 WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/api.php"
 REQUEST_TIMEOUT_SECONDS = 5
@@ -39,6 +46,7 @@ _STOPWORDS = {
     "on",
     "or",
     "the",
+    "topic",
     "to",
     "what",
     "when",
@@ -152,6 +160,68 @@ def _insufficient_info_message(query: str) -> str:
     )
 
 
+def _is_useful_external_result(result: dict, query: str) -> bool:
+    title = _clean_text(result.get("title"))
+    content = _clean_text(result.get("content"))
+    combined = " ".join(part for part in (title, content) if part)
+    if not combined:
+        return False
+    if len(content) < 40:
+        return False
+    query_tokens = _query_tokens(query)
+    if not query_tokens:
+        return False
+
+    overlap = query_tokens & _query_tokens(combined)
+    required_overlap = 1 if len(query_tokens) == 1 else 2
+    if len(overlap) < required_overlap:
+        return False
+
+    return _is_useful_summary(combined, query)
+
+
+def _build_external_summary(results: list[dict], query: str) -> str:
+    useful_bits: list[str] = []
+    seen = set()
+
+    for result in results:
+        if not _is_useful_external_result(result, query):
+            continue
+
+        title = _clean_text(result.get("title"))
+        content = _clean_text(result.get("content"))
+        snippet = content
+        if title and title.lower() not in content.lower():
+            snippet = f"{title}: {content}"
+
+        key = snippet.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        useful_bits.append(snippet)
+
+        if len(useful_bits) >= 2:
+            break
+
+    if not useful_bits:
+        return ""
+
+    summary = " ".join(useful_bits)
+    if not _is_useful_summary(summary, query):
+        return ""
+    return summary
+
+
+def _fact_check_with_tavily(query: str) -> str:
+    if not get_fact_check_external_search_enabled():
+        return ""
+    if not get_tavily_api_key():
+        return ""
+
+    results = tavily_search(query, max_results=get_fact_check_external_max_results())
+    return _build_external_summary(results, query)
+
+
 def fact_check(query: str) -> str:
     """
     Look up a short summary for `query` using Wikipedia.
@@ -163,6 +233,13 @@ def fact_check(query: str) -> str:
     normalized_query = _normalize_query(query)
     if not normalized_query:
         return FALLBACK_MESSAGE
+
+    try:
+        tavily_summary = _fact_check_with_tavily(normalized_query)
+        if tavily_summary:
+            return tavily_summary
+    except (requests.RequestException, ValueError, KeyError, TypeError):
+        pass
 
     try:
         direct_summary = _fetch_summary(normalized_query)
