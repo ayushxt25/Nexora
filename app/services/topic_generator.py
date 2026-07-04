@@ -21,10 +21,46 @@ import re
 from pathlib import Path
 from typing import List, Optional
 
+import requests
+
+from app.config import (
+    get_prep_external_context_enabled,
+    get_prep_external_context_max_results,
+    get_tavily_api_key,
+)
+from app.services.external_search import tavily_search
+
 logger = logging.getLogger(__name__)
 
 _generator = None
 _generator_load_attempted = False
+_PUBLIC_CONTEXT_STOPWORDS = {
+    "a",
+    "about",
+    "an",
+    "and",
+    "at",
+    "conference",
+    "discussion",
+    "event",
+    "for",
+    "from",
+    "general",
+    "in",
+    "is",
+    "meetup",
+    "networking",
+    "of",
+    "on",
+    "session",
+    "summit",
+    "talk",
+    "the",
+    "this",
+    "to",
+    "with",
+    "workshop",
+}
 
 
 def _has_local_model_cache(model_name: str) -> bool:
@@ -38,9 +74,11 @@ def _build_prompt(
     themes: List[str],
     interests: List[str],
     relationship_context: Optional[str] = None,
+    public_context: Optional[str] = None,
 ) -> str:
     theme_text = ", ".join(themes) if themes else "general topics"
     interest_text = ", ".join(interests) if interests else "meeting new people"
+    public_context_block = f"Relevant public context:\n{public_context}\n" if public_context else ""
     context_block = (
         f"Relevant relationship context:\n{relationship_context}\n"
         if relationship_context
@@ -50,6 +88,7 @@ def _build_prompt(
     return (
         f"I'm attending an event focused on {theme_text}. "
         f"I'm personally interested in {interest_text}. "
+        f"{public_context_block}"
         f"{context_block}"
         f"Here are some conversation starters I could use:\n"
         f"1."
@@ -79,6 +118,122 @@ def _dedupe_preserve_order(items: List[str]) -> List[str]:
         seen.add(key)
         result.append(item)
     return result
+
+
+def _public_query_tokens(text: str) -> list[str]:
+    tokens = []
+    for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9&.+-]*", (text or "").lower()):
+        normalized = token.strip(".-+")
+        if len(normalized) < 3 or normalized in _PUBLIC_CONTEXT_STOPWORDS:
+            continue
+        tokens.append(normalized)
+    return tokens
+
+
+def _build_public_context_query(description: str, themes: List[str], interests: List[str]) -> str:
+    sources = [description] if description else []
+    sources.extend(themes[:2])
+    sources.extend(interests[:1])
+
+    ordered_tokens: list[str] = []
+    seen = set()
+    for source in sources:
+        for token in _public_query_tokens(source):
+            if token in seen:
+                continue
+            seen.add(token)
+            ordered_tokens.append(token)
+            if len(ordered_tokens) >= 8:
+                break
+        if len(ordered_tokens) >= 8:
+            break
+
+    if len(ordered_tokens) < 2:
+        return ""
+    return " ".join(ordered_tokens)
+
+
+def _is_useful_public_context_result(result: dict, query: str) -> bool:
+    title = _clean_line(str(result.get("title", "")).strip())
+    content = _clean_line(str(result.get("content", "")).strip())
+    if len(content) < 60:
+        return False
+    if content.count("http://") or content.count("https://"):
+        return False
+    if "|" in content:
+        return False
+
+    query_tokens = set(_public_query_tokens(query))
+    result_tokens = set(_public_query_tokens(f"{title} {content}"))
+    if not query_tokens or not result_tokens:
+        return False
+
+    overlap = query_tokens & result_tokens
+    if len(overlap) < 1:
+        return False
+
+    alpha_words = re.findall(r"[A-Za-z]{3,}", content)
+    if len(alpha_words) < 8:
+        return False
+
+    return True
+
+
+def _summarize_public_context(results: List[dict], query: str) -> str:
+    snippets: list[str] = []
+    seen = set()
+
+    for result in results:
+        if not _is_useful_public_context_result(result, query):
+            continue
+
+        title = _clean_line(str(result.get("title", "")).strip())
+        content = re.sub(r"\s+", " ", str(result.get("content", "")).strip())
+        content = content.split("?", 1)[0].strip()
+        content = re.split(r"(?<=[.!])\s+", content)[0].strip()
+        content = content[:220].rstrip(" ,;:")
+        if len(content) < 50:
+            continue
+
+        snippet = f"{title}: {content}" if title and title.lower() not in content.lower() else content
+        key = snippet.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        snippets.append(snippet)
+
+        if len(snippets) >= 2:
+            break
+
+    return " ".join(snippets)
+
+
+def _is_useful_public_context_summary(summary: str) -> bool:
+    text = summary.strip()
+    if len(text) < 60:
+        return False
+    if text.count("|") >= 2:
+        return False
+
+    words = re.findall(r"[A-Za-z]{3,}", text)
+    return len(words) >= 10
+
+
+def _fetch_public_context(description: str, themes: List[str], interests: List[str]) -> str:
+    if not get_prep_external_context_enabled():
+        return ""
+    if not get_tavily_api_key():
+        return ""
+
+    query = _build_public_context_query(description, themes, interests)
+    if not query:
+        return ""
+
+    results = tavily_search(query, max_results=get_prep_external_context_max_results())
+    summary = _summarize_public_context(results, query)
+    if not _is_useful_public_context_summary(summary):
+        return ""
+    return summary
 
 
 def _is_low_quality_suggestion(suggestion: str) -> bool:
@@ -186,6 +341,7 @@ def generate_topics(
     themes: List[str],
     interests: List[str],
     relationship_context: Optional[str] = None,
+    description: str = "",
 ) -> List[str]:
     """
     Generate up to 3 conversation starter suggestions.
@@ -197,7 +353,13 @@ def generate_topics(
     Returns:
         A list of up to 3 non-empty conversation starter strings.
     """
-    prompt = _build_prompt(themes, interests, relationship_context)
+    public_context = ""
+    try:
+        public_context = _fetch_public_context(description, themes, interests)
+    except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
+        logger.info("Prep external context unavailable; continuing without enrichment: %s", exc)
+
+    prompt = _build_prompt(themes, interests, relationship_context, public_context)
 
     generator = _get_generator()
     if generator is None:

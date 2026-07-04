@@ -100,11 +100,21 @@ def generate_conversation(
         themes=themes,
     )
     try:
-        suggestions = generate_topics(
-            themes,
-            body.interests,
-            relationship_context=generation_context.combined_summary,
-        )
+        try:
+            suggestions = generate_topics(
+                themes,
+                body.interests,
+                relationship_context=generation_context.combined_summary,
+                description=body.description,
+            )
+        except TypeError as exc:
+            if "description" not in str(exc):
+                raise
+            suggestions = generate_topics(
+                themes,
+                body.interests,
+                relationship_context=generation_context.combined_summary,
+            )
         suggestions = finalize_topic_suggestions(
             suggestions,
             themes,

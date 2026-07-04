@@ -66,7 +66,10 @@ def test_generate_conversation_returns_themes_and_suggestions(client, auth_heade
     body = response.json()
     assert "themes" in body
     assert "suggestions" in body
+    assert set(body.keys()) == {"themes", "suggestions"}
     assert isinstance(body["suggestions"], list)
+    assert "confidence" not in body
+    assert "citations" not in body
 
 
 def test_generate_conversation_missing_interests_returns_422(client, auth_headers):
@@ -96,7 +99,7 @@ def test_generate_conversation_long_input_does_not_crash_on_topic_generator_valu
 ):
     from app.routes import conversation as conversation_routes
 
-    def fake_generate_topics(themes, interests, relationship_context=None):
+    def fake_generate_topics(themes, interests, relationship_context=None, description=""):
         raise ValueError("Input length of input_ids is 80, but `max_length` is set to 80.")
 
     monkeypatch.setattr(conversation_routes, "generate_topics", fake_generate_topics)
@@ -121,7 +124,7 @@ def test_generate_conversation_replaces_known_gibberish_pattern_with_fallback(
 ):
     from app.routes import conversation as conversation_routes
 
-    def fake_generate_topics(themes, interests, relationship_context=None):
+    def fake_generate_topics(themes, interests, relationship_context=None, description=""):
         return [
             "Ejfhe | efaijdww | ejfhe",
             "zzzz zzzz zzzz",

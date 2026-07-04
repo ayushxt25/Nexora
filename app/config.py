@@ -132,3 +132,16 @@ def get_fact_check_external_max_results() -> int:
 
 def get_external_search_timeout_seconds() -> int:
     return int(os.getenv("EXTERNAL_SEARCH_TIMEOUT_SECONDS", "5"))
+
+
+def get_prep_external_context_enabled() -> bool:
+    return os.getenv("PREP_EXTERNAL_CONTEXT_ENABLED", "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def get_prep_external_context_max_results() -> int:
+    return int(os.getenv("PREP_EXTERNAL_CONTEXT_MAX_RESULTS", "3"))

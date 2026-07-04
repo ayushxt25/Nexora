@@ -8,6 +8,8 @@ content across environments even with a fixed seed (hardware/library
 version differences can shift floating point results slightly).
 """
 
+import requests
+
 from app.services.topic_generator import generate_topics
 
 
@@ -112,3 +114,104 @@ def test_generate_topics_preserves_normal_useful_output(monkeypatch):
         "How does robotics influence the work your team is prioritizing right now?",
         "What drew you to this event in the first place?",
     ]
+
+
+def test_generate_topics_disabled_external_context_keeps_old_flow(monkeypatch):
+    captured = {}
+
+    def fake_generator(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return [{"generated_text": f"{prompt}\n1. What trends in AI are you following most closely?"}]
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+    monkeypatch.setattr("app.services.topic_generator.get_prep_external_context_enabled", lambda: False)
+    monkeypatch.setattr(
+        "app.services.topic_generator.tavily_search",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("should not be called")),
+    )
+
+    result = generate_topics(["AI"], ["robotics"], description="OpenAI developer summit")
+
+    assert result
+    assert "Relevant public context:" not in captured["prompt"]
+
+
+def test_generate_topics_tavily_success_enriches_prompt(monkeypatch):
+    captured = {}
+
+    def fake_generator(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return [
+            {
+                "generated_text": (
+                    f"{prompt}\n1. What shifts in AI developer tooling are you watching most closely this year?"
+                )
+            }
+        ]
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+    monkeypatch.setattr("app.services.topic_generator.get_prep_external_context_enabled", lambda: True)
+    monkeypatch.setattr("app.services.topic_generator.get_tavily_api_key", lambda: "test-key")
+    monkeypatch.setattr(
+        "app.services.topic_generator.tavily_search",
+        lambda query, max_results=None: [
+            {
+                "title": "AI developer tooling",
+                "content": (
+                    "AI developer tooling platforms are focusing on code generation guardrails, evaluation "
+                    "workflows, and enterprise governance as adoption grows."
+                ),
+            }
+        ],
+    )
+
+    result = generate_topics(["AI"], ["robotics"], description="OpenAI developer summit")
+
+    assert result
+    assert "Relevant public context:" in captured["prompt"]
+    assert "enterprise governance" in captured["prompt"].lower()
+
+
+def test_generate_topics_tavily_failure_falls_back_safely(monkeypatch):
+    captured = {}
+
+    def fake_generator(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return [{"generated_text": f"{prompt}\n1. What trends in AI are you following most closely?"}]
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+    monkeypatch.setattr("app.services.topic_generator.get_prep_external_context_enabled", lambda: True)
+    monkeypatch.setattr("app.services.topic_generator.get_tavily_api_key", lambda: "test-key")
+    monkeypatch.setattr(
+        "app.services.topic_generator.tavily_search",
+        lambda query, max_results=None: (_ for _ in ()).throw(requests.exceptions.Timeout("timeout")),
+    )
+
+    result = generate_topics(["AI"], ["robotics"], description="OpenAI developer summit")
+
+    assert result
+    assert "Relevant public context:" not in captured["prompt"]
+
+
+def test_generate_topics_ignores_weak_tavily_snippets(monkeypatch):
+    captured = {}
+
+    def fake_generator(prompt, **kwargs):
+        captured["prompt"] = prompt
+        return [{"generated_text": f"{prompt}\n1. What trends in AI are you following most closely?"}]
+
+    monkeypatch.setattr("app.services.topic_generator._get_generator", lambda: fake_generator)
+    monkeypatch.setattr("app.services.topic_generator.get_prep_external_context_enabled", lambda: True)
+    monkeypatch.setattr("app.services.topic_generator.get_tavily_api_key", lambda: "test-key")
+    monkeypatch.setattr(
+        "app.services.topic_generator.tavily_search",
+        lambda query, max_results=None: [
+            {"title": "AI", "content": "Short snippet."},
+            {"title": "Summit", "content": "Another weak note."},
+        ],
+    )
+
+    result = generate_topics(["AI"], ["robotics"], description="OpenAI developer summit")
+
+    assert result
+    assert "Relevant public context:" not in captured["prompt"]
