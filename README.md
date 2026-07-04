@@ -64,6 +64,110 @@ High-level flow:
 4. Optional Tavily search enriches Fact Check and Prep when enabled.
 5. Fallback behavior keeps the app usable when optional services are unavailable.
 
+## API Overview
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/register` | Create a user account |
+| `POST` | `/login` | Get a bearer token for legacy auth |
+| `GET` | `/me` | Return the current authenticated user |
+| `POST` | `/generate-conversation` | Generate conversation starters for a prep scenario |
+| `POST` | `/fact-check` | Return a short verification summary for a topic |
+| `POST` | `/analyze-event` | Extract themes from an event description |
+| `GET` | `/history` | Return saved generation history for the current user |
+| `GET` | `/feedback-history` | Return saved feedback entries for the current user |
+| `GET` | `/feedback/summary` | Return user-scoped feedback summary signals |
+| `GET` | `/contacts` | List contacts |
+| `POST` | `/contacts` | Create a contact |
+| `GET` | `/events` | List events |
+| `POST` | `/events` | Create an event |
+| `GET` | `/interactions` | List interactions |
+| `POST` | `/interactions` | Create an interaction |
+| `GET` | `/follow-ups` | List follow-ups |
+| `POST` | `/follow-ups` | Create a follow-up |
+| `GET` | `/profile` | Load the current user's profile |
+| `PUT` | `/profile` | Create or update the current user's profile |
+| `GET` | `/recommendations` | Return recommendation list |
+| `GET` | `/recommendations/next-best-actions` | Return prioritized recommendation actions |
+| `GET` | `/opportunities` | Return opportunity list |
+| `GET` | `/relationships/scores` | Return relationship scores and breakdowns |
+| `GET` | `/analytics/summary` | Return user-facing networking analytics |
+| `GET` | `/network/graph-insights` | Return graph insights for contacts and relationship clusters |
+| `GET` | `/personalization/profile` | Return learned user preference signals |
+| `POST` | `/action-lifecycle` | Update lifecycle state for computed actions |
+| `POST` | `/action-lifecycle/convert-to-follow-up` | Convert an action into a follow-up atomically |
+| `GET` | `/retrieval/debug` | Return retrieval debug output |
+| `GET` | `/metrics` | Return admin metrics output |
+| `GET` | `/metrics/summary` | Return admin metrics summary |
+| `GET` | `/audit/logs` | Return audit log entries |
+| `GET` | `/admin/feedback/summary` | Return admin feedback summary |
+| `GET` | `/admin/feedback` | Return admin feedback items |
+
+## Architecture Diagram
+
+```mermaid
+flowchart LR
+    UI["React Frontend (Vite)"] --> API["FastAPI Backend"]
+    API --> DB["SQLite / PostgreSQL"]
+    API --> CACHE["Redis / Celery (optional)"]
+    UI --> SUPA["Supabase Auth (optional)"]
+    SUPA --> API
+    API --> TAVILY["Tavily Search (optional, server-side only)"]
+    API --> WIKI["Wikipedia Fallback"]
+    API --> ADMIN["Audit / Metrics / Feedback Admin Modules"]
+```
+
+## Prep / Fact Check Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant Context as Stored Context
+    participant Tavily
+    participant Wikipedia
+
+    User->>Frontend: Submit prep scenario or fact-check query
+    Frontend->>Backend: POST /generate-conversation or POST /fact-check
+    alt Generate / Prep
+        Backend->>Context: Load user profile, contacts, interactions, follow-ups
+        opt Tavily enabled and key present
+            Backend->>Tavily: Search public context
+            Tavily-->>Backend: Snippets or error
+        end
+        Backend->>Backend: Filter weak external context and run quality-guarded generation
+        Backend-->>Frontend: themes + suggestions
+    else Fact Check
+        opt Tavily enabled and key present
+            Backend->>Tavily: Search topic
+            Tavily-->>Backend: Snippets or error
+        end
+        alt Tavily unavailable or weak
+            Backend->>Wikipedia: Lookup summary / search fallback
+            Wikipedia-->>Backend: Summary or no useful match
+        end
+        Backend-->>Frontend: query + summary
+    end
+    Frontend-->>User: Render response or safe fallback message
+```
+
+## Provider Modes
+
+- Local fallback mode:
+  Uses the built-in FastAPI backend, local frontend, SQLite fallback, and non-required optional services. Fact Check falls back to Wikipedia when external search is off or unavailable. Prep still works even without Tavily.
+
+- Tavily-enabled mode:
+  When `TAVILY_API_KEY` is present, Fact Check can use Tavily first and Prep can pull short public context when enabled. Weak results are dropped and the existing fallback path is preserved.
+
+- Supabase auth mode:
+  When `VITE_AUTH_PROVIDER=supabase` on the frontend and the matching backend Supabase env vars are enabled, Nexora can authenticate with Supabase JWT verification while keeping auth logic server-side.
+
+- Provider key handling:
+  Tavily keys stay server-side only.
+  Supabase private or service keys should stay server-side only.
+  The frontend should use only public browser-safe values such as `VITE_SUPABASE_ANON_KEY` when applicable.
+
 ## Real API-Powered Prep Features
 
 - Fact Check:
@@ -258,11 +362,48 @@ CI:
 
 ## Deployment Notes
 
-- Use PostgreSQL for deployed environments.
+### Frontend deployment
+
+- Build the app from `frontend-react/` with `npm run build`.
+- Set `VITE_BACKEND_URL` to the public backend origin.
+- Use `VITE_AUTH_PROVIDER=supabase` only when the matching Supabase config is ready.
+- Only expose browser-safe Supabase values in the frontend.
+
+### Backend deployment
+
+- Use PostgreSQL through `DATABASE_URL`.
+- Replace the default `SECRET_KEY`.
+- Set explicit `CORS_ALLOWED_ORIGINS`.
+- Enable Supabase env vars only if you want Supabase auth mode.
+- Tavily is optional and can remain disabled for basic deployments.
+- Redis and Celery are optional unless you want worker/cache features active.
+
+### CORS notes
+
+- Local defaults allow common Vite origins.
+- Production should use exact frontend origins only.
+- Avoid wildcard-style production CORS.
+
+### Required production env vars
+
+- `SECRET_KEY`
+- `DATABASE_URL`
+- `CORS_ALLOWED_ORIGINS`
+
+Optional but common:
+
+- `SUPABASE_AUTH_ENABLED`
+- `SUPABASE_DUAL_AUTH_ENABLED`
+- `SUPABASE_URL`
+- `SUPABASE_AUDIENCE`
+- `SUPABASE_JWT_SECRET`
+- `TAVILY_API_KEY`
+- `FACT_CHECK_EXTERNAL_SEARCH_ENABLED`
+- `PREP_EXTERNAL_CONTEXT_ENABLED`
+
+### Runtime notes
+
 - SQLite remains useful for local development and tests.
-- Redis and Celery are optional foundations, not required for basic local use.
-- Tavily is optional and server-side only.
-- Supabase auth is optional and configurable through environment variables.
 - Docker Compose is suitable for local validation and demos, not as a final production platform by itself.
 
 ## Security Notes
@@ -272,6 +413,8 @@ CI:
 - The frontend should only use `VITE_SUPABASE_ANON_KEY` when Supabase auth is enabled.
 - Replace the default `SECRET_KEY` before any shared or deployed environment.
 - Keep `CORS_ALLOWED_ORIGINS` explicit in deployed environments.
+- Keep Tavily keys server-side only.
+- Keep Supabase private/service keys server-side only.
 
 ## Project Status
 
