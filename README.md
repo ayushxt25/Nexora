@@ -25,14 +25,39 @@ Nexora helps users organize professional relationships, prepare for conversation
 
 ## Screenshots
 
-Screenshots to be added:
+### Dashboard / Command Center
 
-- [ ] Dashboard / Command Center
-- [ ] Relationship Prep / Generate
-- [ ] Fact Check
-- [ ] Recommendations / Opportunities
-- [ ] Developer Console / Feedback Ops
+![Dashboard / Command Center](./screenshots/Dashboard.png)
 
+---
+
+### Relationship Prep / Generate
+
+![Relationship Prep / Generate](./screenshots/relationship-prep.png)
+
+---
+
+### Fact Check
+
+![Fact Check](./screenshots/fact-check.png)
+
+---
+
+### Recommendations 
+
+![Recommendations](./screenshots/recommendations.png)
+
+---
+
+### Developer Console 
+
+![Developer Console](./screenshots/developer-console.png)
+
+---
+
+### Feedback Ops 
+
+![Feedback Ops](./screenshots/Feedback-Ops.png)
 ## Tech Stack
 
 - Backend: FastAPI, SQLAlchemy, Alembic, Pydantic, SlowAPI
