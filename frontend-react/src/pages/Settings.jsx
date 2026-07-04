@@ -177,7 +177,7 @@ export default function Settings() {
           <div className="mt-4 space-y-3">
             <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-white/35">Developer console visibility</p>
-              <p className="mt-2 text-sm text-white/75">{isAdmin ? "Visible for this account" : "Hidden for this account"}</p>
+              <p className="mt-2 text-sm text-white/75">{isAdmin ? "Shown for this account" : "Hidden for this account"}</p>
             </div>
             <div className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-white/35">Feedback signals</p>
@@ -196,8 +196,7 @@ export default function Settings() {
           <h2 className="text-base font-semibold text-white">Settings scope</h2>
         </div>
         <p className="mt-3 text-sm text-white/55">
-          This page intentionally shows only real account and preference state already available from the current
-          frontend session and backend profile/personalization endpoints.
+          Developer access is shown only for accounts with admin permissions.
         </p>
       </section>
     </motion.div>

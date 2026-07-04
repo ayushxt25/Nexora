@@ -328,7 +328,7 @@ export default function ContactProfile() {
             <EmptyState
               icon={CalendarClock}
               title="No interactions yet"
-              description="Use the real interaction endpoint to log meetings, emails, calls, and messages for this relationship."
+              description="Log interactions to keep this relationship context up to date."
               actionLabel="Log interaction"
               onAction={() => setInteractionModalOpen(true)}
             />
@@ -404,7 +404,7 @@ export default function ContactProfile() {
             <EmptyState
               icon={Lightbulb}
               title="No recommendations for this contact"
-              description="The backend only shows recommendation items when the scoring engine has enough contact context."
+              description="Recommendations appear as Nexora learns from your relationship activity."
             />
           ) : (
             <div className="space-y-3">
@@ -434,7 +434,7 @@ export default function ContactProfile() {
             <EmptyState
               icon={Sparkles}
               title="No opportunities linked to this contact"
-              description="Opportunity cards only appear when the backend detects a concrete next move involving this relationship."
+              description="Signals appear as Nexora spots timely next steps around this relationship."
             />
           ) : (
             <div className="space-y-3">
@@ -466,9 +466,8 @@ export default function ContactProfile() {
           <h2 className="text-base font-semibold text-white">AI preparation actions</h2>
         </div>
         <p className="text-sm text-white/55 max-w-3xl">
-          The backend currently supports the generic conversation generator and event/theme analysis flows, not a
-          dedicated contact-prep endpoint. This profile links into the real AI generation page using this contact’s
-          notes and tags when available.
+          Prep guidance becomes stronger as contacts, events, and follow-ups grow. Use notes and interactions to build
+          richer context for future suggestions.
         </p>
         <button
           onClick={() =>

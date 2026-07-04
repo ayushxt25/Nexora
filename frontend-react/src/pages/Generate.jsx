@@ -219,12 +219,12 @@ export default function Generate() {
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Relationship Prep Workspace</h1>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
-            Build conversation starters from real event, contact, recommendation, and opportunity context. Successful
+            Build conversation starters from your event, contact, recommendation, and opportunity context. Successful
             generations are saved automatically to your history.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
-              Real generated output
+              Generated starters
             </span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
               History saved automatically

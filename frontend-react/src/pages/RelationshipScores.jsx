@@ -335,7 +335,7 @@ export default function RelationshipScores() {
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Relationship Scores</h1>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
-            Explore high-value connections, risk signals, and score factor explanations from the real scoring engine.
+            Explore high-value connections, risk signals, and score factor explanations from your current relationship signals.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
@@ -456,7 +456,7 @@ export default function RelationshipScores() {
                 <EmptyState
                   icon={TrendingUp}
                   title="No relationships currently need attention"
-                  description="The backend scoring model is not flagging any high-risk or low-score relationships right now."
+                  description="No low-score or high-risk relationships are standing out right now."
                 />
               ) : (
                 <div className="space-y-3">
@@ -511,11 +511,11 @@ export default function RelationshipScores() {
               <EmptyState
                 icon={CalendarClock}
                 title="Historical score trends unavailable"
-                description="The backend returns current relationship scores and factor breakdowns, but not time-series score history. Recent activity filters above use real interaction timestamps instead."
+                description="Current relationship signals are available now. Score trends will become more useful as more activity builds over time."
               />
             </InsightCard>
 
-            <InsightCard title="Relationship distribution" subtitle="Current score buckets from real score output." icon={TrendingUp}>
+            <InsightCard title="Relationship distribution" subtitle="Current score buckets from available relationship signals." icon={TrendingUp}>
               <MiniBarChart data={scoreDistribution} />
             </InsightCard>
           </div>
@@ -597,3 +597,4 @@ export default function RelationshipScores() {
     </motion.div>
   );
 }
+

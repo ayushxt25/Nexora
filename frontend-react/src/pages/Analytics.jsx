@@ -345,7 +345,8 @@ export default function Analytics() {
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Analytics</h1>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
-            Network health, relationship distribution, interaction activity, and effectiveness metrics from the live backend.
+            Network health, relationship distribution, interaction activity, and effectiveness metrics from your
+            current workspace activity.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
@@ -443,13 +444,13 @@ export default function Analytics() {
           </div>
         </InsightCard>
 
-        <InsightCard title="Relationship distribution metrics" subtitle="Distribution by strength buckets from real score output." icon={Users2}>
+        <InsightCard title="Relationship distribution metrics" subtitle="Distribution by strength buckets from current relationship signals." icon={Users2}>
           <MiniBarChart data={relationshipDistribution} />
         </InsightCard>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <InsightCard title="Interaction activity trends" subtitle="Monthly interaction volume from real interaction timestamps." icon={CalendarClock}>
+        <InsightCard title="Interaction activity trends" subtitle="Monthly interaction volume from your logged activity." icon={CalendarClock}>
           {interactionTrendData.length ? (
             <MiniLineChart data={interactionTrendData} />
           ) : (
@@ -465,7 +466,7 @@ export default function Analytics() {
           <EmptyState
             icon={CheckCircle2}
             title="Historical completion trends unavailable"
-            description="The backend returns current follow-up status counts, but not completion timestamps needed for a true trend line. Current state distribution is shown elsewhere on this page."
+            description="You can review follow-up status across your relationship tasks here today. Trends will become richer as more activity builds over time."
           />
         </InsightCard>
       </div>
@@ -498,7 +499,7 @@ export default function Analytics() {
           )}
         </InsightCard>
 
-        <InsightCard title="Recommendation effectiveness" subtitle="Acceptance and rejection derived from your real feedback history." icon={Lightbulb}>
+        <InsightCard title="Recommendation effectiveness" subtitle="Acceptance and rejection patterns from your feedback history." icon={Lightbulb}>
           {recommendationFeedbackTotal ? (
             <DonutChart segments={recommendationEffectivenessSegments} />
           ) : (
@@ -580,3 +581,4 @@ export default function Analytics() {
     </motion.div>
   );
 }
+

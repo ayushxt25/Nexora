@@ -161,9 +161,7 @@ export default function Profile() {
           <UserCircle2 className="h-5 w-5 text-accent" />
           <h1 className="text-2xl font-semibold text-white">Profile</h1>
         </div>
-        <p className="mt-2 text-sm text-white/50">
-          Maintain your networking profile, goals, interests, and preferred tone using the live backend profile model.
-        </p>
+        <p className="mt-2 text-sm text-white/50">Manage the profile details Nexora uses for personalization.</p>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -173,7 +171,7 @@ export default function Profile() {
               {firstTimeSetup ? "Set up your profile" : "Edit profile"}
             </h2>
             <p className="mt-1 text-sm text-white/45">
-              A `404 /profile` is treated as first-time setup, so this page can create the record on first save.
+              Add the details Nexora can use to tailor recommendations and preparation.
             </p>
           </div>
 
@@ -290,7 +288,7 @@ export default function Profile() {
               <EmptyState
                 icon={Sparkles}
                 title="No personalization summary yet"
-                description="The backend did not return personalization data for this account yet."
+                description="Personalization signals will appear as your profile and activity grow."
               />
             )}
           </div>
@@ -298,8 +296,8 @@ export default function Profile() {
           <div className="glass rounded-2xl p-5 lg:p-6">
             <h2 className="text-base font-semibold text-white">Profile-backed app fields</h2>
             <p className="mt-2 text-sm text-white/55">
-              This page only edits fields supported by the real backend profile schema: full name, headline, goals,
-              interests, and preferred tone.
+              Update the details Nexora can use to tailor recommendations: full name, headline, goals, interests, and
+              preferred tone.
             </p>
           </div>
         </section>

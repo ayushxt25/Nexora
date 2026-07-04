@@ -109,7 +109,7 @@ export default function Help() {
           bullets={[
             "Dashboard summarizes your current state across analytics, next-best actions, and network snapshots.",
             "Follow-ups help you execute on overdue, current, and upcoming relationship tasks.",
-            "Recommendations and Opportunities surface real backend-generated actions and strategic openings.",
+            "Recommendations and Opportunities surface actions generated from your relationship workspace and strategic openings.",
           ]}
         />
 
@@ -129,7 +129,7 @@ export default function Help() {
           title="Prep Workspace"
           description="Use Generate, Fact Check, History, and Feedback History to prepare for conversations and refine output quality over time."
           bullets={[
-            "Generate creates relationship preparation starters using your existing backend context.",
+            "Generate creates relationship preparation starters using the context already captured across your workspace.",
             "Fact Check verifies a topic before you bring it into a conversation.",
             "History and Feedback History help you reuse and improve what worked.",
           ]}

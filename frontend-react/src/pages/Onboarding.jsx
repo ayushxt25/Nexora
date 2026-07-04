@@ -76,9 +76,7 @@ function WelcomeChecklist({ summary }) {
   const items = [
     {
       label: "Profile",
-      description: summary.profileComplete
-        ? "Your profile already has real backend data."
-        : "Add your name, goals, interests, or tone.",
+      description: summary.profileComplete ? "Your profile is already in place." : "Add your name, goals, interests, or tone.",
       complete: summary.profileComplete,
       icon: UserCircle2,
     },
@@ -363,10 +361,10 @@ export default function Onboarding() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
             <p className="text-sm uppercase tracking-[0.2em] text-white/30">First-Time Setup</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white">Set up the app around your real network</h1>
+            <h1 className="mt-3 text-3xl font-semibold text-white">Set up your relationship workspace</h1>
             <p className="mt-3 text-sm sm:text-base text-white/55">
-              This onboarding uses only your live backend profile, contacts, events, and follow-ups. No demo data,
-              no fake completion states, and nothing is marked done until the backend actually has the records.
+              Add the details Nexora needs to personalize your experience and make your workspace feel useful from the
+              start.
             </p>
           </div>
 
@@ -409,8 +407,8 @@ export default function Onboarding() {
                 <div>
                   <h2 className="text-2xl font-semibold text-white">Welcome to your relationship workspace</h2>
                   <p className="mt-2 text-white/55">
-                    We’ll help you add just enough real data to unlock recommendations, opportunities, analytics, and
-                    a less empty dashboard.
+                    We'll help you add just enough detail to unlock recommendations, opportunities, analytics, and
+                    a more useful command center.
                   </p>
                 </div>
 
@@ -422,7 +420,7 @@ export default function Onboarding() {
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                     <Sparkles className="h-5 w-5 text-accent" />
-                    <p className="mt-3 text-sm font-medium text-white">Add one real relationship</p>
+                    <p className="mt-3 text-sm font-medium text-white">Add one relationship</p>
                     <p className="mt-1 text-sm text-white/50">A first contact gives the app something concrete to score.</p>
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
@@ -460,8 +458,7 @@ export default function Onboarding() {
                 <div>
                   <h2 className="text-2xl font-semibold text-white">Profile setup</h2>
                   <p className="mt-2 text-white/55">
-                    This step writes to the real `/profile` endpoint. If the profile is missing, the backend creates it
-                    on save.
+                    Add the profile details Nexora can use to personalize recommendations and preparation.
                   </p>
                 </div>
                 <ProfileStep
@@ -486,7 +483,7 @@ export default function Onboarding() {
                 <div>
                   <h2 className="text-2xl font-semibold text-white">Add your first contact</h2>
                   <p className="mt-2 text-white/55">
-                    One real contact is enough to start unlocking relationship scoring and future recommendations.
+                    One contact is enough to start unlocking relationship scoring and future recommendations.
                   </p>
                 </div>
                 <ContactForm
@@ -508,8 +505,7 @@ export default function Onboarding() {
                 <div>
                   <h2 className="text-2xl font-semibold text-white">Create your first next step</h2>
                   <p className="mt-2 text-white/55">
-                    Choose either an event or a follow-up. The dashboard only treats this as complete once the backend
-                    actually stores one of these records.
+                    Choose either an event or a follow-up to activate your workspace and start organizing next actions.
                   </p>
                 </div>
 
@@ -558,8 +554,7 @@ export default function Onboarding() {
                     <div>
                       <h2 className="text-2xl font-semibold text-white">You’re set up</h2>
                       <p className="mt-2 text-white/55">
-                        The backend now has the minimum real data needed to make the dashboard, recommendations, and
-                        relationship workflows feel useful.
+                        Your workspace is ready to start tracking contacts, follow-ups, recommendations, and prep.
                       </p>
                     </div>
 
@@ -591,7 +586,7 @@ export default function Onboarding() {
                   <EmptyState
                     icon={Sparkles}
                     title="You still have a few setup items left"
-                    description="This finish step only becomes complete when the real backend data exists."
+                    description="Add a little more profile or activity detail to finish setting up your workspace."
                     actionLabel="Resume onboarding"
                     onAction={() => setStep(profileComplete ? (hasContacts ? 3 : 2) : 1)}
                   />
@@ -604,3 +599,4 @@ export default function Onboarding() {
     </motion.div>
   );
 }
+

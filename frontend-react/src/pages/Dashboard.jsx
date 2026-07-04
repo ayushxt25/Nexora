@@ -348,8 +348,8 @@ function Dashboard() {
             <div className="max-w-3xl">
               <p className="text-sm font-semibold text-white">Complete your first-time setup</p>
               <p className="mt-1 text-sm text-white/55">
-                Your dashboard is using real backend data. Add the missing profile, contact, and first event or
-                follow-up records to unlock a fuller experience.
+                Updated from your current relationship activity. Add your profile, first contact, and first event or
+                follow-up to unlock a fuller workspace.
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/45">
                 <span className={`rounded-full px-3 py-1 ${onboarding.profileComplete ? "bg-emerald-500/15 text-emerald-200" : "bg-white/5"}`}>
@@ -393,7 +393,7 @@ function Dashboard() {
         ) : (
           <DashboardSection
             title="Next Best Actions"
-            subtitle="Highest-priority recommendation signals from the backend."
+            subtitle="Priority relationship signals from your workspace."
             icon={Sparkles}
             actionLabel="Contacts"
             onAction={() => navigate("/contacts")}

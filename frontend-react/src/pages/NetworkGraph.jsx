@@ -469,7 +469,8 @@ export default function NetworkGraph() {
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Network Graph</h1>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/54">
-            Explore strong ties, bridge contacts, isolated nodes, and relationship clusters from the backend graph intelligence layer.
+            Explore strong ties, bridge contacts, isolated nodes, and relationship clusters from your relationship
+            graph and network signals.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
@@ -479,7 +480,7 @@ export default function NetworkGraph() {
               No invented edges
             </span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white/60">
-              Backend graph-derived signals
+              Workspace network signals
             </span>
           </div>
         </div>
@@ -534,7 +535,7 @@ export default function NetworkGraph() {
           <EmptyState
             icon={Network}
             title="No graph nodes match this view"
-            description="Try clearing filters or add more contact activity so the backend can enrich graph coverage."
+            description="Try clearing filters or add more contact activity to reveal stronger connection patterns."
             actionLabel="Clear filters"
             onAction={() => {
               setQuery("");

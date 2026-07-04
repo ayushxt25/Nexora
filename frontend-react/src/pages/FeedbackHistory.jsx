@@ -117,9 +117,8 @@ export default function FeedbackHistory() {
           <h1 className="text-2xl font-semibold text-white">Feedback History</h1>
         </div>
         <p className="mt-2 text-sm text-white/50">
-          Review the feedback you've personally submitted so far. This now includes ratings from generated suggestions,
-          recommendation cards, opportunity cards, fact-check results, and app feedback submissions, along with the
-          preference signals that come from those actions.
+          Review the feedback you&apos;ve submitted across conversation starters, recommendations, opportunities, fact
+          checks, and app feedback, along with the signals that shape your experience over time.
         </p>
       </section>
 
