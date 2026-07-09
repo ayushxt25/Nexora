@@ -5,8 +5,8 @@ Nexora is an AI-assisted networking workspace for managing contacts, follow-ups,
 ## Live Project
 
 - Repository: [ayushxt25/Nexora](https://github.com/ayushxt25/Nexora)
-- Live Demo: Not deployed yet
-
+- Live Frontend: [Frontend](https://nexora-two-alpha.vercel.app)
+- Live Bakcend: [Backend](https://nexora-api-3wde.onrender.com)
 ## What Nexora Does
 
 Nexora helps users organize professional relationships, prepare for conversations, surface follow-up opportunities, and inspect system behavior through a dedicated developer console. The backend exposes authenticated APIs for contacts, events, follow-ups, analytics, graph insights, recommendations, opportunities, feedback, and AI-powered prep workflows. The frontend packages those APIs into a polished React dashboard with optional Supabase auth support.
