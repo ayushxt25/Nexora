@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/backend/:path*",
+      "destination": "https://nexora-api-3wde.onrender.com/:path*"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }

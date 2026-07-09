@@ -14,6 +14,10 @@ function normalizeBaseUrl(rawValue) {
     return fallback;
   }
 
+  if (cleaned.startsWith("/")) {
+    return cleaned;
+  }
+
   try {
     const normalized = new URL(cleaned);
     return normalized.origin;
