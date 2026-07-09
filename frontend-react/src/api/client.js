@@ -1,7 +1,28 @@
 import { isSupabaseAuthProvider } from "../lib/authProvider";
 import { getSupabaseAccessToken } from "../lib/supabaseClient";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+function normalizeBaseUrl(rawValue) {
+  const fallback = "http://localhost:8000";
+  if (!rawValue) return fallback;
+
+  const cleaned = String(rawValue)
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/\/+$/, "");
+
+  if (!cleaned || cleaned === "undefined" || cleaned === "null") {
+    return fallback;
+  }
+
+  try {
+    const normalized = new URL(cleaned);
+    return normalized.origin;
+  } catch {
+    return fallback;
+  }
+}
+
+const BASE_URL = normalizeBaseUrl(import.meta.env.VITE_BACKEND_URL);
 const OPTIONAL_PROFILE_CACHE_TTL_MS = 3000;
 
 let optionalProfileCache = {
