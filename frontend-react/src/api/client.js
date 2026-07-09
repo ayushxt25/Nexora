@@ -3,6 +3,10 @@ import { getSupabaseAccessToken } from "../lib/supabaseClient";
 
 function normalizeBaseUrl(rawValue) {
   const fallback = "http://localhost:8000";
+  if (typeof window !== "undefined" && window.location.hostname.endsWith(".vercel.app")) {
+    return "/backend";
+  }
+
   if (!rawValue) return fallback;
 
   const cleaned = String(rawValue)
